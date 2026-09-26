@@ -1,4 +1,5 @@
 export type AppSettings = {
+  provider: "gemini" | "openai";
   model: string;
   apiKey: string;
   currency: string;
@@ -12,7 +13,8 @@ export type AppSettings = {
 };
 
 export const defaultSettings: AppSettings = {
-  model: "gpt-4o-mini",
+  provider: "gemini",
+  model: "gemini-2.0-flash",
   apiKey: "",
   currency: "VND",
   companyName: "WOTU",
