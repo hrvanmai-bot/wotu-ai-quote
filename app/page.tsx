@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession, signOut } from "next-auth/react";
 import {
   catalog,
   emptyQuote,
-  money,
   Product,
   QuoteState,
   Knowledge,
@@ -19,18 +19,30 @@ import { PrintModal } from "./components/PrintModal";
 import { KnowledgePage } from "./components/KnowledgePage";
 import { HistoryPage } from "./components/HistoryPage";
 import { SettingsPage } from "./components/SettingsPage";
+import { BusinessAgent } from "./components/BusinessAgent";
+import { ADMIN_EMAIL } from "../lib/roles";
 
-const NAV: [string, string][] = [
+const NAV_ADMIN: [string, string][] = [
   ["Tổng quan", "⌂"],
   ["Bảng giá tổng", "▦"],
   ["Làm báo giá", "＋"],
+  ["Business Agent", "◎"],
   ["Kiến thức AI", "✦"],
   ["Lịch sử", "↺"],
   ["Cài đặt", "⚙"],
 ];
 
+const NAV_USER: [string, string][] = [
+  ["Làm báo giá", "＋"],
+];
+
 export default function Home() {
-  const [active, setActive] = useState("Tổng quan");
+  const { data: session, status } = useSession();
+  const isAdmin =
+    Boolean((session?.user as any)?.isAdmin) ||
+    (session?.user?.email || "").toLowerCase() === ADMIN_EMAIL;
+  const NAV = isAdmin ? NAV_ADMIN : NAV_USER;
+  const [active, setActive] = useState("Làm báo giá");
   const [quote, setQuote] = useState<QuoteState | null>(null);
   const [quotes, setQuotes] = useState<QuoteState[]>([]);
   const [products, setProducts] = useState<Product[]>(catalog);
@@ -76,6 +88,12 @@ export default function Home() {
       localStorage.setItem("wotu_current_quote", JSON.stringify(quote));
     else localStorage.removeItem("wotu_current_quote");
   }, [loaded, products, knowledge, history, quotes, settings, quote]);
+
+  useEffect(() => {
+    if (status === "authenticated" && !isAdmin && active !== "Làm báo giá") {
+      setActive("Làm báo giá");
+    }
+  }, [status, isAdmin, active]);
 
   function newQuote() {
     const q = emptyQuote(settings.quotePrefix);
@@ -140,10 +158,18 @@ export default function Home() {
     }
   }
 
-  if (!loaded) {
+  if (!loaded || status === "loading") {
     return (
       <div className="min-h-screen grid place-items-center text-[#8a93a1]">
         Đang mở WOTU…
+      </div>
+    );
+  }
+
+  if (status === "unauthenticated") {
+    return (
+      <div className="min-h-screen grid place-items-center text-[#8a93a1]">
+        Đang chuyển đăng nhập…
       </div>
     );
   }
@@ -173,9 +199,9 @@ export default function Home() {
           </button>
         ))}
         <div className="mt-auto rounded-2xl bg-white/5 border border-white/10 p-4">
-          <div className="text-[10px] uppercase tracking-wider text-white/35">Dữ liệu</div>
-          <div className="mt-2 text-sm">{products.filter((p) => p.active).length} mã đang dùng</div>
-          <div className="text-xs text-white/45">{quotes.length} báo giá đã lưu</div>
+          <div className="text-[10px] uppercase tracking-wider text-white/35">Tài khoản</div>
+          <div className="mt-2 text-sm truncate">{session?.user?.email}</div>
+          <div className="text-xs text-white/45">{isAdmin ? "Admin · full quyền" : "Chỉ làm báo giá"}</div>
         </div>
       </aside>
 
@@ -185,14 +211,23 @@ export default function Home() {
             <div className="text-[11px] text-[#929aa7]">WOTU / {active}</div>
             <h1 className="font-semibold mt-0.5">{active}</h1>
           </div>
-          <button className="primary" onClick={newQuote}>＋ Báo giá mới</button>
+          <div className="flex items-center gap-2">
+            <span className="hidden sm:inline text-xs text-[#8a93a1] max-w-[180px] truncate">
+              {session?.user?.email}
+              {isAdmin ? " · Admin" : ""}
+            </span>
+            <button className="primary" onClick={newQuote}>＋ Báo giá mới</button>
+            <button type="button" className="secondary text-xs" onClick={() => signOut({ callbackUrl: "/login" })}>
+              Thoát
+            </button>
+          </div>
         </header>
 
         <div className="p-4 lg:p-8 max-w-[1600px] mx-auto">
-          {active === "Tổng quan" && (
+          {active === "Tổng quan" && isAdmin && (
             <Dashboard quote={quote} quotes={quotes} products={products} knowledge={knowledge} newQuote={newQuote} go={setActive} />
           )}
-          {active === "Bảng giá tổng" && (
+          {active === "Bảng giá tổng" && isAdmin && (
             <PriceBook products={products} add={addProduct} update={updateProduct} remove={removeProduct} settings={settings} setProducts={setProducts} />
           )}
           {active === "Làm báo giá" && (
@@ -210,13 +245,22 @@ export default function Home() {
               onPrint={() => setShowPrint(true)}
             />
           )}
-          {active === "Kiến thức AI" && (
+          {active === "Business Agent" && isAdmin && (
+            <BusinessAgent
+              settings={settings}
+              products={products}
+              knowledge={knowledge}
+              setProducts={setProducts}
+              setKnowledge={setKnowledge}
+            />
+          )}
+          {active === "Kiến thức AI" && isAdmin && (
             <KnowledgePage knowledge={knowledge} setKnowledge={setKnowledge} />
           )}
-          {active === "Lịch sử" && (
+          {active === "Lịch sử" && isAdmin && (
             <HistoryPage history={history} onOpen={openQuote} />
           )}
-          {active === "Cài đặt" && (
+          {active === "Cài đặt" && isAdmin && (
             <SettingsPage
               settings={settings}
               setSettings={setSettings}
