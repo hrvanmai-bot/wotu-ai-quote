@@ -1,0 +1,18 @@
+{
+  "updatedAt": "2026-09-26",
+  "products": [
+    {"code": "TB-IN-A", "name": "Tủ bếp dưới Inox 304 - Cánh Acrylic", "category": "Tủ bếp", "unit": "MD", "price": 4650000, "material": "Inox 304 / Acrylic", "active": true},
+    {"code": "TB-PLY-M", "name": "Tủ bếp trên Plywood - Melamine", "category": "Tủ bếp", "unit": "MD", "price": 2800000, "material": "Plywood phủ Melamine", "active": true},
+    {"code": "TB-PLY-A", "name": "Tủ bếp cao kịch trần Plywood - Acrylic", "category": "Tủ bếp", "unit": "MD", "price": 2950000, "material": "Plywood / Acrylic", "active": true},
+    {"code": "GLASS-008", "name": "Kính ốp bếp cường lực 8mm", "category": "Bếp", "unit": "MD", "price": 900000, "material": "Kính cường lực", "active": true},
+    {"code": "STONE-LAMAR", "name": "Đá Lamar mặt bếp và bàn đảo", "category": "Bếp", "unit": "MD", "price": 2250000, "material": "Đá Lamar", "active": true},
+    {"code": "GAR-GP0280E", "name": "Giá xoong nồi Garis GP02.80E", "category": "Phụ kiện bếp", "unit": "Cái", "price": 3650000, "material": "Inox 304", "active": true},
+    {"code": "LED-001", "name": "Hệ LED hắt sáng", "category": "Điện / LED", "unit": "MD", "price": 250000, "material": "Nhôm định hình + Adapter", "active": true},
+    {"code": "SENSOR-001", "name": "Cảm biến LED", "category": "Điện / LED", "unit": "Cái", "price": 150000, "material": "Cảm biến", "active": true},
+    {"code": "RAY-001", "name": "Ray giảm chấn", "category": "Phụ kiện", "unit": "Bộ", "price": 450000, "material": "Ray giảm chấn", "active": true},
+    {"code": "TR-THACHCAO-001", "name": "Trần thạch cao khung chìm", "category": "Trần", "unit": "m²", "price": 185000, "material": "Khung xương + tấm thạch cao", "active": true},
+    {"code": "PLY-WARDROBE", "name": "Tủ quần áo cánh mở Plywood - Melamine", "category": "Tủ áo", "unit": "m²", "price": 2650000, "material": "Plywood phủ Melamine", "active": true},
+    {"code": "BED-18", "name": "Giường ngủ 1m8 Plywood - Melamine", "category": "Phòng ngủ", "unit": "Bộ", "price": 6500000, "material": "Plywood phủ Melamine", "active": true},
+    {"code": "LAVABO-CB", "name": "Combo tủ Lavabo", "category": "Phòng tắm", "unit": "Bộ", "price": 6500000, "material": "Nhựa chống nước", "active": true}
+  ]
+}
