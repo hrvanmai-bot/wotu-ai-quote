@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import { Providers } from "./components/Providers";
 
 export const metadata: Metadata = {
-  title: "WOTU AI Quote",
-  description: "Báo giá thông minh của WOTU — AI chỉ là trợ lý, bảng giá là nguồn sự thật.",
+  title: "WOTU Quote",
+  description: "Hệ thống báo giá WOTU Design Build.",
 };
 
 export default function RootLayout({

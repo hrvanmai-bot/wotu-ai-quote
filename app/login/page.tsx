@@ -17,13 +17,17 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen grid place-items-center bg-[#f5f6f8] p-6">
       <div className="card p-8 max-w-md w-full text-center space-y-5">
-        <div className="w-14 h-14 rounded-2xl bg-[#111a2d] text-white grid place-items-center font-black text-xl mx-auto">
-          W
+        <div className="mx-auto w-14 h-14 rounded-2xl bg-white border grid place-items-center">
+          <img src="/wotu-mark.svg" alt="WOTU" className="w-9 h-9" />
         </div>
         <div>
-          <h1 className="text-2xl font-semibold">WOTU Quote</h1>
-          <p className="muted mt-2 text-sm">
-            Đăng nhập để làm báo giá. Chỉ chủ sở hữu mới mở được bảng giá & cấu hình.
+          <h1 className="text-2xl font-semibold tracking-tight">
+            <span className="text-[#c41e2a]">WOTU</span> Quote
+          </h1>
+          <p className="muted mt-2 text-sm leading-relaxed">
+            Hệ thống báo giá nội thất & xây dựng.
+            <br />
+            Đăng nhập bằng tài khoản Google để tiếp tục.
           </p>
         </div>
         <button
@@ -35,10 +39,10 @@ export default function LoginPage() {
             await signIn("google", { callbackUrl: "/" });
           }}
         >
-          {busy ? "Đang chuyển…" : "Đăng nhập bằng Google"}
+          {busy ? "Đang đăng nhập…" : "Tiếp tục với Google"}
         </button>
         <p className="text-[11px] text-[#8a93a1]">
-          Apple / iCloud sẽ bổ sung sau. Hiện dùng Google.
+          WOTU Design · Build · Quy Nhơn, Gia Lai
         </p>
       </div>
     </main>
