@@ -1,27 +1,3 @@
-import { NextResponse } from "next/server";
-import { catalog, QuoteState } from "../../../lib/quote-engine";
-
-const schema={type:"object",name:"quote_command",strict:true,schema:{
-  action:{type:"string",enum:["create","edit"]},
-  message:{type:"string"},
-  items:{type:"array",items:{type:"object",properties:{code:{type:"string"},qty:{type:"number"},unitPrice:{type:["number","null"]}},required:["code","qty","unitPrice"],additionalProperties:false}},
-  removeCodes:{type:"array",items:{type:"string"}},
-  discount:{type:["number","null"]}
-}};
-
-export async function POST(req:Request){
- try{
-  if(!process.env.OPENAI_API_KEY)return NextResponse.json({error:"Thiếu OPENAI_API_KEY trên Vercel."},{status:503});
-  const body=await req.json() as {message:string;quote:QuoteState};
-  const catalogText=catalog.map(p=>`CODE=${p.code} | ${p.name} | UNIT=${p.unit} | MATERIAL=${p.material} | PRICE=${p.price}`).join("\n");
-  const prompt=`Bạn là AI báo giá WOTU. Chỉ được chọn mã CODE có trong catalog. Tuyệt đối không tự tạo mã và không tự đoán đơn giá. Đơn giá chỉ lấy PRICE trong catalog, hoặc lấy unitPrice người dùng nói rõ trong câu. Nếu người dùng yêu cầu tạo báo giá mới, action=create. Nếu đang sửa báo giá hiện tại, action=edit. Với mỗi hạng mục, trả code và qty. unitPrice chỉ khác null khi người dùng nói rõ giá mới cho chính hạng mục đó. removeCodes dùng khi người dùng yêu cầu bỏ/xóa. discount là phần trăm nếu người dùng yêu cầu giảm giá, nếu không giữ null. message bằng tiếng Việt, ngắn gọn.\n\nCATALOG:\n${catalogText}\n\nBÁO GIÁ HIỆN TẠI:\n${JSON.stringify(body.quote)}\n\nYÊU CẦU:\n${body.message}`;
-  const r=await fetch("https://api.openai.com/v1/responses",{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${process.env.OPENAI_API_KEY}`},body:JSON.stringify({model:process.env.OPENAI_MODEL||"gpt-5.6-luna",input:prompt,text:{format:{type:"json_schema",name:"quote_command",strict:true,schema:schema.schema}}})});
-  if(!r.ok){const e=await r.text();return NextResponse.json({error:e},{status:502})}
-  const data=await r.json(); const parsed=JSON.parse(data.output_text);
-  const valid=new Set(catalog.map(p=>p.code));
-  parsed.items=parsed.items.filter((x:any)=>valid.has(x.code)&&x.qty>0);
-  parsed.removeCodes=parsed.removeCodes.filter((x:string)=>valid.has(x));
-  parsed.items=parsed.items.map((x:any)=>{const p=catalog.find(p=>p.code===x.code)!;return {...x,unitPrice:x.unitPrice??p.price}});
-  return NextResponse.json(parsed);
- }catch(e){return NextResponse.json({error:e instanceof Error?e.message:"AI request failed"},{status:500})}
-}
+import {NextResponse} from "next/server";
+import {Product,QuoteState,Knowledge} from "../../../lib/quote-engine";
+export async function POST(req:Request){try{if(!process.env.OPENAI_API_KEY)return NextResponse.json({error:"Thiếu OPENAI_API_KEY trên Vercel."},{status:503});const body=await req.json() as {message:string;quote:QuoteState;products:Product[];knowledge:Knowledge[]};const active=body.products.filter(p=>p.active);const catalogText=active.map(p=>`CODE=${p.code} | NAME=${p.name} | CAT=${p.category} | UNIT=${p.unit} | MATERIAL=${p.material} | PRICE=${p.price}`).join("\n");const memory=body.knowledge.filter(k=>k.enabled).map(k=>`[${k.title}] ${k.content}`).join("\n");const prompt=`Bạn là WOTU AI Quote. AI chỉ diễn giải yêu cầu. Không tự tạo mã, không tự bịa giá. Chỉ dùng CODE trong MASTER PRICE BOOK. Giá mặc định phải lấy PRICE. Chỉ thay unitPrice khi người dùng nói rõ giá. Nếu người dùng nói giá theo dự án thì ghi đúng giá đó cho lần báo giá này, không thay đổi bảng giá tổng. action=create chỉ khi người dùng muốn tạo báo giá mới; ngược lại edit. removeCodes khi xóa. discount là phần trăm giảm giá.\n\nMASTER PRICE BOOK:\n${catalogText}\n\nKIẾN THỨC ĐANG BẬT:\n${memory||"Không có"}\n\nBÁO GIÁ HIỆN TẠI:\n${JSON.stringify(body.quote)}\n\nYÊU CẦU:\n${body.message}`;const schema={type:"object",name:"quote_command",strict:true,schema:{type:"object",properties:{action:{type:"string",enum:["create","edit"]},message:{type:"string"},items:{type:"array",items:{type:"object",properties:{code:{type:"string"},qty:{type:"number"},unitPrice:{type:["number","null"]}},required:["code","qty","unitPrice"],additionalProperties:false}},removeCodes:{type:"array",items:{type:"string"}},discount:{type:["number","null"]}},required:["action","message","items","removeCodes","discount"],additionalProperties:false}};const r=await fetch("https://api.openai.com/v1/responses",{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${process.env.OPENAI_API_KEY}`},body:JSON.stringify({model:process.env.OPENAI_MODEL||"gpt-5.6-luna",input:prompt,text:{format:{type:"json_schema",...schema}}})});if(!r.ok)return NextResponse.json({error:await r.text()},{status:502});const data=await r.json();const parsed=JSON.parse(data.output_text);const valid=new Map(active.map(p=>[p.code,p]));parsed.items=parsed.items.filter((x:any)=>valid.has(x.code)&&x.qty>0).map((x:any)=>({...x,unitPrice:x.unitPrice??valid.get(x.code)!.price}));parsed.removeCodes=parsed.removeCodes.filter((x:string)=>valid.has(x));return NextResponse.json(parsed)}catch(e){return NextResponse.json({error:e instanceof Error?e.message:"AI request failed"},{status:500})}}
