@@ -247,3 +247,13 @@ button, input, textarea, select { font: inherit; }
 
 .scroll::-webkit-scrollbar { width: 5px; height: 5px; }
 .scroll::-webkit-scrollbar-thumb { background: #d9dee6; border-radius: 9px; }
+
+/* Liquid glass login */
+.login-bg {
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 20%, rgba(255, 180, 200, 0.55), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 80% 15%, rgba(160, 190, 255, 0.5), transparent 50%),
+    radial-gradient(ellipse 60% 50% at 70% 80%, rgba(255, 200, 150, 0.4), transparent 50%),
+    radial-gradient(ellipse 50% 40% at 15% 75%, rgba(180, 160, 255, 0.35), transparent 45%),
+    linear-gradient(135deg, #6b7fd7 0%, #a78bfa 40%, #f0a6ca 70%, #f5c6aa 100%);
+}
