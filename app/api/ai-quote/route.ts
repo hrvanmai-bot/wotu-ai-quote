@@ -82,9 +82,9 @@ function buildPrompt(
   message: string
 ) {
   if (mode === "teach") {
-    return `Ban la WOTU AI Teacher.\nMASTER PRICE BOOK:\n${catalogText || "Trong"}\nKIEN THUC:\n${memory || "Khong co"}\nYEU CAU DAY:\n${message}\nTra ve JSON dung schema.`;
+    return `Ban la WOTU AI Teacher. Day bang gia / kien thuc.\nMASTER PRICE BOOK:\n${catalogText || "Trong"}\nKIEN THUC:\n${memory || "Khong co"}\nYEU CAU DAY:\n${message}\nTra ve JSON dung schema (action, message, items, removeCodes, discount, updatePrices, newProducts, knowledgeToSave, notes).`;
   }
-  return `Ban la WOTU AI Quote Assistant.\nChi dung CODE trong MASTER PRICE BOOK.\nMASTER PRICE BOOK:\n${catalogText || "Trong"}\nKIEN THUC:\n${memory || "Khong co"}\nBAO GIA HIEN TAI:\n${quoteSnap}\nYEU CAU:\n${message}\nTra ve JSON dung schema.`;
+  return `Ban la WOTU AI Quote Assistant.\nChi dung CODE trong MASTER PRICE BOOK.\nMASTER PRICE BOOK:\n${catalogText || "Trong"}\nKIEN THUC:\n${memory || "Khong co"}\nBAO GIA HIEN TAI:\n${quoteSnap}\nYEU CAU:\n${message}\nTra ve JSON dung schema (action, message, items, removeCodes, discount, updatePrices, newProducts, knowledgeToSave, notes).`;
 }
 
 function normalizeParsed(parsed: any, active: Product[], allProducts: Product[]) {
@@ -119,7 +119,7 @@ function normalizeParsed(parsed: any, active: Product[], allProducts: Product[])
 }
 
 async function callGemini(apiKey: string, model: string, prompt: string) {
-  const modelId = model || process.env.GEMINI_MODEL || "gemini-2.0-flash";
+  const modelId = model || process.env.GEMINI_MODEL || "gemini-3.8-flash";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${encodeURIComponent(apiKey)}`;
   const r = await fetch(url, {
     method: "POST",
@@ -200,7 +200,7 @@ export async function POST(req: Request) {
         {
           error:
             provider === "gemini"
-              ? "Chua co Gemini API key. Them GEMINI_API_KEY tren Vercel, hoac dan key trong Cai dat."
+              ? "Chua co Gemini API key. Them GEMINI_API_KEY tren Vercel."
               : "Chua co OpenAI API key.",
         },
         { status: 503 }
@@ -238,7 +238,7 @@ export async function POST(req: Request) {
     const model =
       body.model ||
       (provider === "gemini"
-        ? process.env.GEMINI_MODEL || "gemini-2.0-flash"
+        ? process.env.GEMINI_MODEL || "gemini-3.8-flash"
         : process.env.OPENAI_MODEL || "gpt-4o-mini");
 
     const parsedRaw =
