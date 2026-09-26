@@ -1,5 +1,6 @@
 export type AppSettings = {
   model: string;
+  apiKey: string;
   currency: string;
   companyName: string;
   companyAddress: string;
@@ -12,6 +13,7 @@ export type AppSettings = {
 
 export const defaultSettings: AppSettings = {
   model: "gpt-4o-mini",
+  apiKey: "",
   currency: "VND",
   companyName: "WOTU",
   companyAddress: "",
