@@ -47,11 +47,11 @@ export function QuoteEditor({
   if (!quote) {
     return (
       <div className="card p-12 text-center max-w-lg mx-auto">
-        <div className="badge mx-auto">BAO GIA</div>
-        <h2 className="text-xl font-semibold mt-3">Chua co bao gia dang mo</h2>
-        <p className="muted mt-2 text-sm">Tao bao gia moi de bat dau.</p>
+        <div className="badge mx-auto">BÁO GIÁ</div>
+        <h2 className="text-xl font-semibold mt-3">Chưa có báo giá đang mở</h2>
+        <p className="muted mt-2 text-sm">Bấm bên dưới để bắt đầu bản mới.</p>
         <button className="primary mt-6" onClick={newQuote}>
-          + Tao bao gia moi
+          ＋ Tạo báo giá mới
         </button>
       </div>
     );
@@ -66,7 +66,7 @@ export function QuoteEditor({
   async function send() {
     if (!input.trim() || busy) return;
     if (!infoReady) {
-      alert("Vui long dien: Khach hang, Cong trinh, So dien thoai truoc khi dung AI.");
+      alert("Vui lòng nhập đủ tên khách, công trình và số điện thoại.");
       return;
     }
     setBusy(true);
@@ -88,7 +88,7 @@ export function QuoteEditor({
         }),
       });
       const d = await r.json();
-      if (!r.ok) throw new Error(d.error || "AI loi");
+      if (!r.ok) throw new Error(d.error || "Không xử lý được yêu cầu");
       const learned = applyLearnResult(products, knowledge, d);
       if (learned.summary.length) {
         setProducts(learned.products);
@@ -98,10 +98,10 @@ export function QuoteEditor({
       const next = applyAICommand(quote!, d, learned.products);
       setQuote(next);
       record(d.message || input, next);
-      setAiMsg(d.message || "Da cap nhat bao gia.");
+      setAiMsg(d.message || "Đã cập nhật báo giá.");
       setInput("");
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Khong goi duoc AI");
+      alert(e instanceof Error ? e.message : "Có lỗi khi gọi AI");
     } finally {
       setBusy(false);
     }
@@ -136,17 +136,17 @@ export function QuoteEditor({
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
           <div>
-            <div className="badge">BAO GIA</div>
+            <div className="badge">BÁO GIÁ</div>
             <h2 className="hero text-2xl sm:text-3xl mt-1">
-              {quote.quoteNumber || "Bao gia moi"}
+              {quote.quoteNumber || "Bản mới"}
             </h2>
             <p className="muted mt-1 text-sm">
-              Dien thong tin khach roi chat AI de lap hang muc.
+              Nhập thông tin khách, sau đó mô tả hạng mục để soạn báo giá.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <button type="button" className="secondary" onClick={save}>
-              Luu
+              Lưu
             </button>
             <button type="button" className="secondary" onClick={onPrint}>
               In / PDF
@@ -169,14 +169,14 @@ export function QuoteEditor({
 
         <section className="card p-5">
           <div className="flex items-center justify-between gap-2 mb-3">
-            <h3 className="font-semibold text-sm">Thong tin khach hang</h3>
+            <h3 className="font-semibold text-sm">Thông tin khách hàng</h3>
             {!infoReady ? (
-              <span className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-                Bat buoc truoc khi chat AI
+              <span className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                Cần điền đủ
               </span>
             ) : (
-              <span className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                Da du thong tin
+              <span className="text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                Đã đủ
               </span>
             )}
           </div>
@@ -191,7 +191,7 @@ export function QuoteEditor({
                   updatedAt: new Date().toISOString(),
                 })
               }
-              placeholder="Ten khach hang *"
+              placeholder="Tên khách hàng *"
             />
             <input
               className="field"
@@ -203,7 +203,7 @@ export function QuoteEditor({
                   updatedAt: new Date().toISOString(),
                 })
               }
-              placeholder="Ten cong trinh / du an *"
+              placeholder="Công trình / dự án *"
             />
             <input
               className="field"
@@ -211,7 +211,7 @@ export function QuoteEditor({
               onChange={(e) =>
                 setQuote({ ...quote, customerPhone: e.target.value })
               }
-              placeholder="So dien thoai *"
+              placeholder="Số điện thoại *"
             />
             <input
               className="field"
@@ -219,7 +219,7 @@ export function QuoteEditor({
               onChange={(e) =>
                 setQuote({ ...quote, customerAddress: e.target.value })
               }
-              placeholder="Dia chi (tuy chon)"
+              placeholder="Địa chỉ"
             />
           </div>
         </section>
@@ -229,10 +229,10 @@ export function QuoteEditor({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-[#fafbfc] text-[10px] uppercase tracking-wider text-[#8992a0]">
-                  <th className="text-left p-3">Hang muc</th>
+                  <th className="text-left p-3">Hạng mục</th>
                   <th className="text-center">SL</th>
-                  <th className="text-right">Don gia</th>
-                  <th className="text-right">Thanh tien</th>
+                  <th className="text-right">Đơn giá</th>
+                  <th className="text-right">Thành tiền</th>
                   <th></th>
                 </tr>
               </thead>
@@ -240,7 +240,8 @@ export function QuoteEditor({
                 {quote.items.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="p-12 text-center muted text-sm">
-                      Chua co hang muc. Dien thong tin khach roi yeu cau AI.
+                      Chưa có hạng mục. Sau khi đủ thông tin khách, dùng khung bên
+                      cạnh để thêm.
                     </td>
                   </tr>
                 ) : (
@@ -282,7 +283,7 @@ export function QuoteEditor({
                           className="text-xs text-red-500"
                           onClick={() => removeItem(i.id)}
                         >
-                          Xoa
+                          Xóa
                         </button>
                       </td>
                     </tr>
@@ -292,8 +293,8 @@ export function QuoteEditor({
             </table>
           </div>
           <div className="border-t p-4 grid sm:grid-cols-2 gap-3 text-sm">
-            <div className="flex items-center gap-2">
-              <span className="text-[#8a93a1]">Chiet khau %</span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[#8a93a1]">Chiết khấu %</span>
               <input
                 className="field-sm w-20"
                 type="number"
@@ -317,12 +318,12 @@ export function QuoteEditor({
             </div>
             <div className="text-right space-y-1">
               <div className="flex justify-end gap-6">
-                <span className="text-[#8a93a1]">Tam tinh</span>
+                <span className="text-[#8a93a1]">Tạm tính</span>
                 <span>{money(t.subtotal)}</span>
               </div>
               <div className="flex justify-end gap-6 text-lg font-semibold">
-                <span>Tong cong</span>
-                <span className="text-[#9a1f2b]">{money(t.total)}</span>
+                <span>Tổng cộng</span>
+                <span className="text-[#c41e2a]">{money(t.total)}</span>
               </div>
             </div>
           </div>
@@ -331,18 +332,19 @@ export function QuoteEditor({
 
       <aside className="card overflow-hidden flex flex-col h-fit lg:sticky lg:top-24">
         <div className="bg-[#111a2d] text-white px-4 py-3">
-          <div className="text-[10px] tracking-widest text-white/40">WOTU AI</div>
-          <div className="font-semibold">Tro ly bao gia</div>
+          <div className="text-[10px] tracking-widest text-white/40">WOTU</div>
+          <div className="font-semibold">Soạn hạng mục</div>
         </div>
         <div className="p-4 space-y-3">
           {!infoReady && (
-            <div className="text-xs rounded-xl border border-amber-200 bg-amber-50 text-amber-900 p-3">
-              Dien <b>Khach hang</b>, <b>Cong trinh</b> va <b>SDT</b> ben trai truoc khi chat AI.
+            <div className="text-xs rounded-xl border border-amber-200 bg-amber-50 text-amber-950 p-3 leading-relaxed">
+              Vui lòng nhập <b>tên khách</b>, <b>công trình</b> và{" "}
+              <b>số điện thoại</b> trước khi gửi yêu cầu.
             </div>
           )}
           {aiMsg && <div className="ai-bubble text-sm">{aiMsg}</div>}
           {learnLog.length > 0 && (
-            <div className="text-xs text-emerald-800 bg-emerald-50 border border-emerald-100 rounded-xl p-2 space-y-0.5">
+            <div className="text-xs text-emerald-900 bg-emerald-50 border border-emerald-100 rounded-xl p-2 space-y-0.5">
               {learnLog.map((s, i) => (
                 <div key={i}>• {s}</div>
               ))}
@@ -354,8 +356,8 @@ export function QuoteEditor({
             onChange={(e) => setInput(e.target.value)}
             placeholder={
               infoReady
-                ? "Vi du: Bao gia tu bep duoi inox 4m, tu tren 3m..."
-                : "Dien thong tin khach truoc..."
+                ? "Ví dụ: Tủ bếp dưới inox 4m, tủ trên 3m, đá mặt bếp..."
+                : "Hoàn tất thông tin khách để tiếp tục..."
             }
             disabled={!infoReady || busy}
           />
@@ -365,7 +367,7 @@ export function QuoteEditor({
             className="primary w-full"
             onClick={send}
           >
-            {busy ? "Dang xu ly..." : "Gui AI"}
+            {busy ? "Đang xử lý…" : "Gửi yêu cầu"}
           </button>
         </div>
       </aside>
