@@ -1,2 +1,23 @@
-export type AppSettings={model:string;currency:string;companyName:string;quotePrefix:string;autoSave:boolean};
-export const defaultSettings:AppSettings={model:"gpt-5.6-luna",currency:"VND",companyName:"WOTU",quotePrefix:"BG-WOTU",autoSave:true};
+export type AppSettings = {
+  model: string;
+  currency: string;
+  companyName: string;
+  companyAddress: string;
+  companyPhone: string;
+  companyEmail: string;
+  quotePrefix: string;
+  defaultVat: number;
+  autoSave: boolean;
+};
+
+export const defaultSettings: AppSettings = {
+  model: "gpt-4o-mini",
+  currency: "VND",
+  companyName: "WOTU",
+  companyAddress: "",
+  companyPhone: "",
+  companyEmail: "",
+  quotePrefix: "BG-WOTU",
+  defaultVat: 0,
+  autoSave: true,
+};
