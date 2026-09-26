@@ -1,14 +1,33 @@
 import type { NextAuthOptions } from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { isAdminEmail } from "./roles";
 
 export { ADMIN_EMAIL, isAdminEmail } from "./roles";
 
 export const authOptions: NextAuthOptions = {
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    CredentialsProvider({
+      name: "Email hoặc số điện thoại",
+      credentials: {
+        identifier: { label: "Email hoặc số điện thoại", type: "text" },
+        name: { label: "Họ và tên", type: "text" },
+      },
+      async authorize(credentials) {
+        const identifier = String(credentials?.identifier || "").trim();
+        const name = String(credentials?.name || "").trim();
+
+        if (!identifier || name.length < 2) return null;
+
+        const email = identifier.includes("@")
+          ? identifier.toLowerCase()
+          : `${identifier.replace(/[^0-9+]/g, "")}@wotu.local`;
+
+        return {
+          id: identifier.toLowerCase(),
+          name,
+          email,
+        };
+      },
     }),
   ],
   pages: {
