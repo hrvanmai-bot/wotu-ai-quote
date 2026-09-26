@@ -214,3 +214,75 @@ export function downloadBlob(content: string, filename: string, mime: string) {
   a.click();
   URL.revokeObjectURL(a.href);
 }
+
+export type LearnResult = {
+  updatePrices?: { code: string; price: number; note?: string }[];
+  newProducts?: {
+    code: string;
+    name: string;
+    category: string;
+    unit: string;
+    price: number;
+    material: string;
+  }[];
+  knowledgeToSave?: { title: string; content: string }[];
+  notes?: string[];
+};
+
+export function applyLearnResult(
+  products: Product[],
+  knowledge: Knowledge[],
+  data: LearnResult
+): { products: Product[]; knowledge: Knowledge[]; summary: string[] } {
+  let nextProducts = [...products];
+  let nextKnowledge = [...knowledge];
+  const summary: string[] = [];
+
+  for (const u of data.updatePrices || []) {
+    const i = nextProducts.findIndex((p) => p.code === u.code);
+    if (i >= 0) {
+      const old = nextProducts[i].price;
+      nextProducts[i] = {
+        ...nextProducts[i],
+        price: u.price,
+        note: u.note || nextProducts[i].note,
+        active: true,
+      };
+      summary.push(`Cập nhật ${u.code}: ${old} → ${u.price}`);
+    }
+  }
+
+  for (const n of data.newProducts || []) {
+    if (nextProducts.some((p) => p.code === n.code)) continue;
+    nextProducts.push({
+      code: n.code,
+      name: n.name,
+      category: n.category || "Khác",
+      unit: n.unit || "Cái",
+      price: n.price,
+      material: n.material || "",
+      active: true,
+    });
+    summary.push(`Thêm mã mới ${n.code}: ${n.name}`);
+  }
+
+  for (const k of data.knowledgeToSave || []) {
+    nextKnowledge = [
+      {
+        id: crypto.randomUUID(),
+        title: k.title,
+        content: k.content,
+        enabled: true,
+        createdAt: new Date().toISOString(),
+      },
+      ...nextKnowledge,
+    ];
+    summary.push(`Lưu kiến thức: ${k.title}`);
+  }
+
+  for (const note of data.notes || []) {
+    if (note) summary.push(`Lưu ý: ${note}`);
+  }
+
+  return { products: nextProducts, knowledge: nextKnowledge, summary };
+}
