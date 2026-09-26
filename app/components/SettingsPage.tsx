@@ -60,45 +60,57 @@ export function SettingsPage({
       <div>
         <div className="badge">SYSTEM SETTINGS</div>
         <h2 className="hero text-3xl">Cai dat.</h2>
-        <p className="muted mt-2">Cau hinh ung dung, API key va day AI.</p>
+        <p className="muted mt-2">Gemini mac dinh. Key Vercel dung chung moi nguoi.</p>
       </div>
 
       <section className="card p-6">
         <h3 className="font-semibold">AI & API Key</h3>
-        <p className="muted mt-1">Key luu tren thiet bi (localStorage).</p>
-        <label className="block text-sm font-medium mt-4">OPENAI_API_KEY</label>
+        <p className="muted mt-1">
+          Dat GEMINI_API_KEY tren Vercel de moi nguoi dung chung AI.
+          Key dan o day chi luu tren thiet bi ban.
+        </p>
+        <label className="block text-sm font-medium mt-4">Nha cung cap</label>
+        <select
+          className="field mt-2"
+          value={settings.provider || "gemini"}
+          onChange={(e) => {
+            const provider = e.target.value as "gemini" | "openai";
+            setSettings({
+              ...settings,
+              provider,
+              model: provider === "gemini" ? "gemini-2.0-flash" : "gpt-4o-mini",
+            });
+          }}
+        >
+          <option value="gemini">Google Gemini</option>
+          <option value="openai">OpenAI</option>
+        </select>
+        <label className="block text-sm font-medium mt-4">API Key (tuy chon)</label>
         <div className="flex gap-2 mt-2">
           <input
             className="field flex-1 font-mono text-xs"
             type="password"
             value={settings.apiKey}
             onChange={(e) => setSettings({ ...settings, apiKey: e.target.value })}
-            placeholder="sk-..."
+            placeholder={(settings.provider || "gemini") === "gemini" ? "AIza..." : "sk-..."}
             autoComplete="off"
           />
           <button
             type="button"
             className="secondary shrink-0"
             onClick={() =>
-              alert(settings.apiKey.trim() ? "Da luu API key." : "Chua nhap API key.")
+              alert(settings.apiKey.trim() ? "Da luu key tren thiet bi." : "Chua nhap key — se dung key Vercel.")
             }
           >
             Luu key
           </button>
-        </div>
-        <div className="mt-2 text-xs">
-          {settings.apiKey.trim() ? (
-            <span className="text-emerald-600">Da co key</span>
-          ) : (
-            <span className="text-[#8a93a1]">Chua co key</span>
-          )}
         </div>
         <label className="block text-sm font-medium mt-5">Model AI</label>
         <input
           className="field mt-2"
           value={settings.model}
           onChange={(e) => setSettings({ ...settings, model: e.target.value })}
-          placeholder="gpt-4o-mini"
+          placeholder="gemini-2.0-flash"
         />
       </section>
 
@@ -114,7 +126,7 @@ export function SettingsPage({
         <h3 className="font-semibold">Thong tin cong ty</h3>
         <div className="grid sm:grid-cols-2 gap-3 mt-4">
           <input className="field" value={settings.companyName} onChange={(e) => setSettings({ ...settings, companyName: e.target.value })} placeholder="Ten don vi" />
-          <input className="field" value={settings.quotePrefix} onChange={(e) => setSettings({ ...settings, quotePrefix: e.target.value })} placeholder="Tien to so BG" />
+          <input className="field" value={settings.quotePrefix} onChange={(e) => setSettings({ ...settings, quotePrefix: e.target.value })} placeholder="Tien to BG" />
           <input className="field" value={settings.companyPhone} onChange={(e) => setSettings({ ...settings, companyPhone: e.target.value })} placeholder="Dien thoai" />
           <input className="field" value={settings.companyEmail} onChange={(e) => setSettings({ ...settings, companyEmail: e.target.value })} placeholder="Email" />
           <input className="field sm:col-span-2" value={settings.companyAddress} onChange={(e) => setSettings({ ...settings, companyAddress: e.target.value })} placeholder="Dia chi" />
@@ -129,10 +141,10 @@ export function SettingsPage({
       </section>
 
       <section className="card p-6">
-        <h3 className="font-semibold">Sao luu & khoi phuc</h3>
+        <h3 className="font-semibold">Sao luu</h3>
         <div className="flex flex-wrap gap-3 mt-4">
           <button className="primary" onClick={backup}>Tai backup JSON</button>
-          <button className="secondary" onClick={() => fileRef.current?.click()}>Khoi phuc tu file</button>
+          <button className="secondary" onClick={() => fileRef.current?.click()}>Khoi phuc</button>
           <input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={(e) => e.target.files?.[0] && restore(e.target.files[0])} />
         </div>
       </section>

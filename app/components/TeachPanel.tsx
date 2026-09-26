@@ -37,6 +37,7 @@ export function TeachPanel({
           knowledge,
           model: settings.model,
           apiKey: settings.apiKey,
+          provider: settings.provider || "gemini",
           mode: "teach",
         }),
       });
@@ -57,7 +58,7 @@ export function TeachPanel({
 
   return (
     <section className="card p-6">
-      <h3 className="font-semibold">Day AI</h3>
+      <h3 className="font-semibold">Day AI (Gemini)</h3>
       <p className="muted mt-1">Day gia, them ma moi, hoac quy tac.</p>
       {msg && <div className="ai-bubble mt-4">{msg}</div>}
       {log.length > 0 && (
