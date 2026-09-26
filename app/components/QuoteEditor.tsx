@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import {
   applyAICommand,
   applyLearnResult,
@@ -31,9 +31,9 @@ export function QuoteEditor({
   products: Product[];
   knowledge: Knowledge[];
   settings: AppSettings;
-  setQuote: React.Dispatch<React.SetStateAction<QuoteState | null>>;
-  setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
-  setKnowledge: React.Dispatch<React.SetStateAction<Knowledge[]>>;
+  setQuote: Dispatch<SetStateAction<QuoteState | null>>;
+  setProducts: Dispatch<SetStateAction<Product[]>>;
+  setKnowledge: Dispatch<SetStateAction<Knowledge[]>>;
   save: () => void;
   newQuote: () => void;
   record: (a: string, q: QuoteState) => void;
@@ -240,8 +240,7 @@ export function QuoteEditor({
                 {quote.items.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="p-12 text-center muted text-sm">
-                      Chưa có hạng mục. Sau khi đủ thông tin khách, dùng khung bên
-                      cạnh để thêm.
+                      Chưa có hạng mục. Sau khi đủ thông tin khách, dùng khung bên cạnh để thêm.
                     </td>
                   </tr>
                 ) : (
