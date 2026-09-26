@@ -1,1 +1,12 @@
-# WOTU AI Quote\n\nWorkspace báo giá AI của WOTU.\n\n## Nguyên tắc\n- AI chỉ diễn giải câu lệnh; Price Engine tính tiền.\n- Giá chuẩn lấy từ kho mã WOTU hoặc giá người dùng nhập.\n- Báo giá theo mẫu WOTU: hạng mục, ĐVT, khối lượng, đơn giá, thành tiền.\n- Có thể mở rộng Supabase, AI provider, PDF/Excel và AI Memory mà không đổi giao diện chính.\n\n## Nguồn dữ liệu\nCác mã mẫu và điều khoản ban đầu được dựng theo báo giá WOTU BG-NT-CHITHUY-210926-v5 được cung cấp trong workspace.
+# WOTU AI Quote
+
+Workspace báo giá AI của WOTU.
+
+## Nguyên tắc
+- AI chỉ diễn giải câu lệnh; Price Engine tính tiền.
+- Giá chuẩn lấy từ kho mã WOTU hoặc giá người dùng nhập.
+- Báo giá theo mẫu WOTU: hạng mục, ĐVT, khối lượng, đơn giá, thành tiền.
+- Có thể mở rộng Supabase, AI provider, PDF/Excel và AI Memory mà không đổi giao diện chính.
+
+## Nguồn dữ liệu
+Các mã mẫu và điều khoản ban đầu được dựng theo báo giá WOTU BG-NT-CHITHUY-210926-v5 được cung cấp trong workspace.
