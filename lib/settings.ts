@@ -14,7 +14,7 @@ export type AppSettings = {
 
 export const defaultSettings: AppSettings = {
   provider: "gemini",
-  model: "gemini-3.8-flash",
+  model: "gemini-3.5-flash-lite",
   apiKey: "",
   currency: "VND",
   companyName: "WOTU",

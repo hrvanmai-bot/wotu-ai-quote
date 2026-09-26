@@ -82,9 +82,9 @@ function buildPrompt(
   message: string
 ) {
   if (mode === "teach") {
-    return `Ban la WOTU AI Teacher. Day bang gia / kien thuc.\nMASTER PRICE BOOK:\n${catalogText || "Trong"}\nKIEN THUC:\n${memory || "Khong co"}\nYEU CAU DAY:\n${message}\nTra ve JSON dung schema (action, message, items, removeCodes, discount, updatePrices, newProducts, knowledgeToSave, notes).`;
+    return `Ban la WOTU AI Teacher. Day bang gia / kien thuc.\nKhi user day gia: updatePrices (ma da co) hoac newProducts (ma moi).\nKhi user day quy tac: knowledgeToSave.\nMASTER PRICE BOOK:\n${catalogText || "Trong"}\nKIEN THUC:\n${memory || "Khong co"}\nYEU CAU DAY:\n${message}\nTra ve JSON dung schema.`;
   }
-  return `Ban la WOTU AI Quote Assistant.\nChi dung CODE trong MASTER PRICE BOOK.\nMASTER PRICE BOOK:\n${catalogText || "Trong"}\nKIEN THUC:\n${memory || "Khong co"}\nBAO GIA HIEN TAI:\n${quoteSnap}\nYEU CAU:\n${message}\nTra ve JSON dung schema (action, message, items, removeCodes, discount, updatePrices, newProducts, knowledgeToSave, notes).`;
+  return `Ban la WOTU AI Quote Assistant.\nChi dung CODE trong MASTER PRICE BOOK.\nNeu user noi "luu lai"/"day": dien newProducts/updatePrices/knowledgeToSave.\nMASTER PRICE BOOK:\n${catalogText || "Trong"}\nKIEN THUC:\n${memory || "Khong co"}\nBAO GIA HIEN TAI:\n${quoteSnap}\nYEU CAU:\n${message}\nTra ve JSON dung schema.`;
 }
 
 function normalizeParsed(parsed: any, active: Product[], allProducts: Product[]) {
@@ -103,7 +103,10 @@ function normalizeParsed(parsed: any, active: Product[], allProducts: Product[])
   parsed.newProducts = (parsed.newProducts || [])
     .filter(
       (x: any) =>
-        x.code && x.name && typeof x.price === "number" && !allCodes.has(String(x.code).toUpperCase())
+        x.code &&
+        x.name &&
+        typeof x.price === "number" &&
+        !allCodes.has(String(x.code).toUpperCase())
     )
     .map((x: any) => ({
       ...x,
@@ -112,14 +115,26 @@ function normalizeParsed(parsed: any, active: Product[], allProducts: Product[])
       unit: x.unit || "Cai",
       material: x.material || "",
     }));
-  parsed.knowledgeToSave = (parsed.knowledgeToSave || []).filter((x: any) => x.title && x.content);
+  parsed.knowledgeToSave = (parsed.knowledgeToSave || []).filter(
+    (x: any) => x.title && x.content
+  );
   parsed.notes = parsed.notes || [];
   parsed.discount = parsed.discount ?? null;
   return parsed;
 }
 
-async function callGemini(apiKey: string, model: string, prompt: string) {
-  const modelId = model || process.env.GEMINI_MODEL || "gemini-3.8-flash";
+function isHighDemandError(msg: string) {
+  const m = msg.toLowerCase();
+  return (
+    m.includes("high demand") ||
+    m.includes("try again later") ||
+    m.includes("resource_exhausted") ||
+    m.includes("unavailable") ||
+    m.includes("overloaded")
+  );
+}
+
+async function callGeminiOnce(apiKey: string, modelId: string, prompt: string) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${encodeURIComponent(apiKey)}`;
   const r = await fetch(url, {
     method: "POST",
@@ -128,6 +143,7 @@ async function callGemini(apiKey: string, model: string, prompt: string) {
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       generationConfig: {
         temperature: 0.15,
+        maxOutputTokens: 4096,
         responseMimeType: "application/json",
         responseSchema: RESPONSE_SCHEMA,
       },
@@ -144,9 +160,38 @@ async function callGemini(apiKey: string, model: string, prompt: string) {
   }
   const data = await r.json();
   const text =
-    data.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join("") || "";
+    data.candidates?.[0]?.content?.parts
+      ?.map((p: any) => p.text)
+      .filter(Boolean)
+      .join("") || "";
   if (!text) throw new Error("Gemini empty response");
   return JSON.parse(text);
+}
+
+async function callGemini(apiKey: string, preferredModel: string, prompt: string) {
+  const primary =
+    preferredModel || process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
+  const fallbacks = (process.env.GEMINI_FALLBACK_MODELS ||
+    "gemini-3.1-flash-lite,gemini-flash-latest,gemini-3.8-flash")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const models = [primary, ...fallbacks.filter((m) => m !== primary)];
+
+  let lastErr: Error | null = null;
+  for (const modelId of models) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        return await callGeminiOnce(apiKey, modelId, prompt);
+      } catch (e) {
+        lastErr = e instanceof Error ? e : new Error(String(e));
+        if (!isHighDemandError(lastErr.message)) throw lastErr;
+        // brief backoff then retry / next model
+        await new Promise((res) => setTimeout(res, 400 + attempt * 600));
+      }
+    }
+  }
+  throw lastErr || new Error("Gemini high demand");
 }
 
 async function callOpenAI(apiKey: string, model: string, prompt: string) {
@@ -238,7 +283,7 @@ export async function POST(req: Request) {
     const model =
       body.model ||
       (provider === "gemini"
-        ? process.env.GEMINI_MODEL || "gemini-3.8-flash"
+        ? process.env.GEMINI_MODEL || "gemini-3.5-flash-lite"
         : process.env.OPENAI_MODEL || "gpt-4o-mini");
 
     const parsedRaw =
@@ -249,9 +294,15 @@ export async function POST(req: Request) {
     const parsed = normalizeParsed(parsedRaw, active, body.products || []);
     return NextResponse.json(parsed);
   } catch (e) {
+    const msg = e instanceof Error ? e.message : "AI request failed";
+    const status = isHighDemandError(msg) ? 503 : 500;
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "AI request failed" },
-      { status: 500 }
+      {
+        error: isHighDemandError(msg)
+          ? "Gemini dang qua tai. He thong da thu model khac — vui long thu lai sau vai giay."
+          : msg,
+      },
+      { status }
     );
   }
 }
