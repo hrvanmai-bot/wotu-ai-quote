@@ -1,0 +1,2 @@
+export type AppSettings={model:string;currency:string;companyName:string;quotePrefix:string;autoSave:boolean};
+export const defaultSettings:AppSettings={model:"gpt-5.6-luna",currency:"VND",companyName:"WOTU",quotePrefix:"BG-WOTU",autoSave:true};
