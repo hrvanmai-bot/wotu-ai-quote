@@ -33,6 +33,7 @@ const NAV_ADMIN: [string, string][] = [
 ];
 
 const NAV_USER: [string, string][] = [
+  ["Báo giá đã làm", "↺"],
   ["Làm báo giá", "＋"],
 ];
 
@@ -53,28 +54,40 @@ export default function Home() {
   const [showPrint, setShowPrint] = useState(false);
 
   useEffect(() => {
-    try {
-      const get = (k: string, d: any) =>
-        JSON.parse(localStorage.getItem(k) || "null") ?? d;
-      setProducts(get("wotu_products", catalog));
-      setKnowledge(get("wotu_knowledge", []));
-      setHistory(get("wotu_history", []));
-      setQuotes(get("wotu_quotes", []));
-      const s = get("wotu_settings", defaultSettings);
-      setSettings({ ...defaultSettings, ...s });
-      const q = get("wotu_current_quote", null);
-      if (q) {
-        setQuote({
-          ...emptyQuote(s?.quotePrefix || "BG-WOTU"),
-          ...q,
-          quoteNumber: q.quoteNumber || emptyQuote().quoteNumber,
-          vat: q.vat ?? s?.defaultVat ?? 0,
-          discount: q.discount ?? 0,
-        });
+    (async () => {
+      try {
+        const get = (k: string, d: any) =>
+          JSON.parse(localStorage.getItem(k) || "null") ?? d;
+        let serverProducts: Product[] | null = null;
+        try {
+          const r = await fetch("/api/catalog", { cache: "no-store" });
+          if (r.ok) {
+            const j = await r.json();
+            if (Array.isArray(j.products) && j.products.length) {
+              serverProducts = j.products;
+            }
+          }
+        } catch {}
+        setProducts(serverProducts || get("wotu_products", catalog));
+        setKnowledge(get("wotu_knowledge", []));
+        setHistory(get("wotu_history", []));
+        setQuotes(get("wotu_quotes", []));
+        const s = get("wotu_settings", defaultSettings);
+        setSettings({ ...defaultSettings, ...s });
+        const q = get("wotu_current_quote", null);
+        if (q) {
+          setQuote({
+            ...emptyQuote(s?.quotePrefix || "BG-WOTU"),
+            ...q,
+            quoteNumber: q.quoteNumber || emptyQuote().quoteNumber,
+            vat: q.vat ?? s?.defaultVat ?? 0,
+            discount: q.discount ?? 0,
+          });
+        }
+      } finally {
+        setLoaded(true);
       }
-    } finally {
-      setLoaded(true);
-    }
+    })();
   }, []);
 
   useEffect(() => {
@@ -90,7 +103,12 @@ export default function Home() {
   }, [loaded, products, knowledge, history, quotes, settings, quote]);
 
   useEffect(() => {
-    if (status === "authenticated" && !isAdmin && active !== "Làm báo giá") {
+    if (
+      status === "authenticated" &&
+      !isAdmin &&
+      active !== "Làm báo giá" &&
+      active !== "Báo giá đã làm"
+    ) {
       setActive("Làm báo giá");
     }
   }, [status, isAdmin, active]);
@@ -138,8 +156,23 @@ export default function Home() {
     setActive("Làm báo giá");
   }
 
+  async function publishCatalog(list?: Product[]) {
+    try {
+      const body = list || products;
+      await fetch("/api/catalog", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ products: body }),
+      });
+    } catch {}
+  }
+
   function updateProduct(p: Product) {
-    setProducts((x) => x.map((v) => (v.code === p.code ? p : v)));
+    setProducts((x) => {
+      const next = x.map((v) => (v.code === p.code ? p : v));
+      void publishCatalog(next);
+      return next;
+    });
   }
 
   function addProduct(p: Product) {
@@ -147,14 +180,22 @@ export default function Home() {
       alert("Mã sản phẩm đã tồn tại.");
       return;
     }
-    setProducts((x) => [...x, p]);
+    setProducts((x) => {
+      const next = [...x, p];
+      void publishCatalog(next);
+      return next;
+    });
   }
 
   function removeProduct(code: string) {
     if (confirm("Ẩn mã này khỏi AI và bảng giá?")) {
-      setProducts((x) =>
-        x.map((p) => (p.code === code ? { ...p, active: false } : p))
-      );
+      setProducts((x) => {
+        const next = x.map((p) =>
+          p.code === code ? { ...p, active: false } : p
+        );
+        void publishCatalog(next);
+        return next;
+      });
     }
   }
 
@@ -178,20 +219,32 @@ export default function Home() {
     <main className="min-h-screen flex bg-[#f5f6f8] text-[#172033] page-pad-mobile">
       <aside className="hidden lg:flex w-[255px] bg-[#111a2d] text-white flex-col p-4 sticky top-0 h-screen no-print">
         <div className="flex items-center gap-3 px-3 py-4 mb-7">
-          <div className="w-10 h-10 rounded-xl bg-white text-[#111a2d] grid place-items-center font-black">W</div>
+          <img
+            src="/wotu-mark.svg"
+            alt="WOTU"
+            className="w-10 h-10 rounded-xl bg-white p-1.5"
+          />
           <div>
-            <div className="font-bold">WOTU</div>
-            <div className="text-[10px] tracking-[.28em] text-white/40">QUOTATION SYSTEM</div>
+            <div className="font-bold tracking-wide">
+              <span className="text-[#e11d2e]">WOTU</span>
+            </div>
+            <div className="text-[9px] tracking-[.22em] text-white/45">
+              DESIGN · BUILD
+            </div>
           </div>
         </div>
-        <div className="px-3 text-[10px] uppercase tracking-[.2em] text-white/30 mb-3">Hệ thống</div>
+        <div className="px-3 text-[10px] uppercase tracking-[.2em] text-white/30 mb-3">
+          Hệ thống
+        </div>
         {NAV.map(([n, icon]) => (
           <button
             key={n}
             onClick={() => setActive(n)}
             className={
               "flex items-center gap-3 w-full text-left px-3 py-3 rounded-xl text-sm mb-1 " +
-              (active === n ? "bg-white text-[#111a2d]" : "text-white/65 hover:bg-white/5")
+              (active === n
+                ? "bg-white text-[#111a2d]"
+                : "text-white/65 hover:bg-white/5")
             }
           >
             <span className="w-5 text-center">{icon}</span>
@@ -199,9 +252,13 @@ export default function Home() {
           </button>
         ))}
         <div className="mt-auto rounded-2xl bg-white/5 border border-white/10 p-4">
-          <div className="text-[10px] uppercase tracking-wider text-white/35">Tài khoản</div>
+          <div className="text-[10px] uppercase tracking-wider text-white/35">
+            Tài khoản
+          </div>
           <div className="mt-2 text-sm truncate">{session?.user?.email}</div>
-          <div className="text-xs text-white/45">{isAdmin ? "Admin · full quyền" : "Chỉ làm báo giá"}</div>
+          <div className="text-xs text-white/45">
+            {isAdmin ? "Admin · full quyền" : "Chỉ làm báo giá"}
+          </div>
         </div>
       </aside>
 
@@ -216,8 +273,14 @@ export default function Home() {
               {session?.user?.email}
               {isAdmin ? " · Admin" : ""}
             </span>
-            <button className="primary" onClick={newQuote}>＋ Báo giá mới</button>
-            <button type="button" className="secondary text-xs" onClick={() => signOut({ callbackUrl: "/login" })}>
+            <button className="primary" onClick={newQuote}>
+              ＋ Báo giá mới
+            </button>
+            <button
+              type="button"
+              className="secondary text-xs"
+              onClick={() => signOut({ callbackUrl: "/login" })}
+            >
               Thoát
             </button>
           </div>
@@ -225,10 +288,24 @@ export default function Home() {
 
         <div className="p-4 lg:p-8 max-w-[1600px] mx-auto">
           {active === "Tổng quan" && isAdmin && (
-            <Dashboard quote={quote} quotes={quotes} products={products} knowledge={knowledge} newQuote={newQuote} go={setActive} />
+            <Dashboard
+              quote={quote}
+              quotes={quotes}
+              products={products}
+              knowledge={knowledge}
+              newQuote={newQuote}
+              go={setActive}
+            />
           )}
           {active === "Bảng giá tổng" && isAdmin && (
-            <PriceBook products={products} add={addProduct} update={updateProduct} remove={removeProduct} settings={settings} setProducts={setProducts} />
+            <PriceBook
+              products={products}
+              add={addProduct}
+              update={updateProduct}
+              remove={removeProduct}
+              settings={settings}
+              setProducts={setProducts}
+            />
           )}
           {active === "Làm báo giá" && (
             <QuoteEditor
@@ -257,8 +334,12 @@ export default function Home() {
           {active === "Kiến thức AI" && isAdmin && (
             <KnowledgePage knowledge={knowledge} setKnowledge={setKnowledge} />
           )}
-          {active === "Lịch sử" && isAdmin && (
-            <HistoryPage history={history} onOpen={openQuote} />
+          {(active === "Lịch sử" || active === "Báo giá đã làm") && (
+            <HistoryPage
+              history={history}
+              quotes={quotes}
+              onOpen={openQuote}
+            />
           )}
           {active === "Cài đặt" && isAdmin && (
             <SettingsPage
@@ -277,7 +358,11 @@ export default function Home() {
 
       <nav className="mobile-nav no-print">
         {NAV.map(([n, icon]) => (
-          <button key={n} className={active === n ? "active" : ""} onClick={() => setActive(n)}>
+          <button
+            key={n}
+            className={active === n ? "active" : ""}
+            onClick={() => setActive(n)}
+          >
             <span className="text-base">{icon}</span>
             <span className="truncate max-w-[56px]">{n.split(" ")[0]}</span>
           </button>
@@ -285,7 +370,11 @@ export default function Home() {
       </nav>
 
       {showPrint && quote && (
-        <PrintModal quote={quote} settings={settings} onClose={() => setShowPrint(false)} />
+        <PrintModal
+          quote={quote}
+          settings={settings}
+          onClose={() => setShowPrint(false)}
+        />
       )}
     </main>
   );
