@@ -1,61 +1,248 @@
 "use client";
-import {useEffect,useMemo,useState} from "react";
-import {applyAICommand,catalog,emptyQuote,money,Product,QuoteState,Knowledge,QuoteHistory,totals} from "../lib/quote-engine";
-import {defaultSettings,AppSettings} from "../lib/settings";
 
-const NAV=[["Tổng quan","⌂"],["Bảng giá tổng","▦"],["Làm báo giá","＋"],["Kiến thức AI","✦"],["Lịch sử","↺"],["Cài đặt","⚙"]];
+import { useEffect, useState } from "react";
+import {
+  catalog,
+  emptyQuote,
+  money,
+  Product,
+  QuoteState,
+  Knowledge,
+  QuoteHistory,
+  totals,
+} from "../lib/quote-engine";
+import { defaultSettings, AppSettings } from "../lib/settings";
+import { Dashboard } from "./components/Dashboard";
+import { PriceBook } from "./components/PriceBook";
+import { QuoteEditor } from "./components/QuoteEditor";
+import { PrintModal } from "./components/PrintModal";
+import { KnowledgePage } from "./components/KnowledgePage";
+import { HistoryPage } from "./components/HistoryPage";
+import { SettingsPage } from "./components/SettingsPage";
 
-export default function Home(){
- const[active,setActive]=useState("Tổng quan"),[quote,setQuote]=useState<QuoteState|null>(null),[quotes,setQuotes]=useState<QuoteState[]>([]),[products,setProducts]=useState<Product[]>(catalog),[knowledge,setKnowledge]=useState<Knowledge[]>([]),[history,setHistory]=useState<QuoteHistory[]>([]),[settings,setSettings]=useState<AppSettings>(defaultSettings),[loaded,setLoaded]=useState(false);
- useEffect(()=>{try{const get=(k:string,d:any)=>JSON.parse(localStorage.getItem(k)||"null")??d;setProducts(get("wotu_products",catalog));setKnowledge(get("wotu_knowledge",[]));setHistory(get("wotu_history",[]));setQuotes(get("wotu_quotes",[]));setSettings(get("wotu_settings",defaultSettings));const q=get("wotu_current_quote",null);setQuote(q)}finally{setLoaded(true)}},[]);
- useEffect(()=>{if(!loaded)return;localStorage.setItem("wotu_products",JSON.stringify(products));localStorage.setItem("wotu_knowledge",JSON.stringify(knowledge));localStorage.setItem("wotu_history",JSON.stringify(history));localStorage.setItem("wotu_quotes",JSON.stringify(quotes));localStorage.setItem("wotu_settings",JSON.stringify(settings));if(quote)localStorage.setItem("wotu_current_quote",JSON.stringify(quote));else localStorage.removeItem("wotu_current_quote")},[loaded,products,knowledge,history,quotes,settings,quote]);
- function newQuote(){const q=emptyQuote();setQuote(q);setActive("Làm báo giá")}
- function saveQuote(q:QuoteState){const next=[q,...quotes.filter(x=>x.id!==q.id)];setQuotes(next);setQuote(q);setActive("Làm báo giá")}
- function record(action:string,q:QuoteState){const h:QuoteHistory={id:crypto.randomUUID(),quoteId:q.id,time:new Date().toISOString(),action,total:totals(q).total,snapshot:structuredClone(q)};setHistory(x=>[h,...x].slice(0,100))}
- function finishQuote(){if(!quote)return;saveQuote(quote);record("Lưu báo giá",quote)}
- function openQuote(q:QuoteState){setQuote(structuredClone(q));setActive("Làm báo giá")}
- function updateProduct(p:Product){setProducts(x=>x.map(v=>v.code===p.code?p:v))}
- function addProduct(p:Product){if(products.some(x=>x.code===p.code))return alert("Mã sản phẩm đã tồn tại.");setProducts(x=>[...x,p]);}
- function removeProduct(code:string){if(confirm("Ẩn mã này khỏi AI và bảng giá?"))setProducts(x=>x.map(p=>p.code===code?{...p,active:false}:p))}
- if(!loaded)return <div className="min-h-screen grid place-items-center">Đang mở WOTU…</div>;
- return <main className="min-h-screen flex bg-[#f5f6f8] text-[#172033]">
-  <aside className="hidden lg:flex w-[255px] bg-[#111a2d] text-white flex-col p-4 sticky top-0 h-screen">
-   <div className="flex items-center gap-3 px-3 py-4 mb-7"><div className="w-10 h-10 rounded-xl bg-white text-[#111a2d] grid place-items-center font-black">W</div><div><div className="font-bold">WOTU</div><div className="text-[10px] tracking-[.28em] text-white/40">QUOTATION SYSTEM</div></div></div>
-   <div className="px-3 text-[10px] uppercase tracking-[.2em] text-white/30 mb-3">Hệ thống</div>
-   {NAV.map(([n,icon])=><button key={n} onClick={()=>setActive(n)} className={"flex items-center gap-3 w-full text-left px-3 py-3 rounded-xl text-sm mb-1 "+(active===n?"bg-white text-[#111a2d]":"text-white/65 hover:bg-white/5")}><span className="w-5 text-center">{icon}</span>{n}</button>)}
-   <div className="mt-auto rounded-2xl bg-white/5 border border-white/10 p-4"><div className="text-[10px] uppercase tracking-wider text-white/35">Dữ liệu</div><div className="mt-2 text-sm">{products.filter(p=>p.active).length} mã đang dùng</div><div className="text-xs text-white/45">{quotes.length} báo giá đã lưu</div></div>
-  </aside>
-  <section className="flex-1 min-w-0">
-   <header className="h-[74px] bg-white/90 backdrop-blur border-b flex items-center justify-between px-5 lg:px-8 sticky top-0 z-20"><div><div className="text-[11px] text-[#929aa7]">WOTU / {active}</div><h1 className="font-semibold mt-1">{active}</h1></div><button className="primary" onClick={newQuote}>＋ Báo giá mới</button></header>
-   <div className="p-5 lg:p-8 max-w-[1600px] mx-auto">
-    {active==="Tổng quan"&&<Dashboard quote={quote} quotes={quotes} products={products} knowledge={knowledge} newQuote={newQuote} go={(x:string)=>setActive(x)}/>}
-    {active==="Bảng giá tổng"&&<PriceBook products={products} add={addProduct} update={updateProduct} remove={removeProduct}/>}
-    {active==="Làm báo giá"&&<QuoteEditor quote={quote} products={products} knowledge={knowledge} setQuote={setQuote} save={finishQuote} newQuote={newQuote} record={record} settings={settings}/>}
-    {active==="Kiến thức AI"&&<KnowledgePage knowledge={knowledge} setKnowledge={setKnowledge}/>}
-    {active==="Lịch sử"&&<HistoryPage history={history} onOpen={openQuote}/>}
-    {active==="Cài đặt"&&<SettingsPage settings={settings} setSettings={setSettings} products={products} knowledge={knowledge} quotes={quotes}/>}
-   </div>
-  </section>
- </main>
-}
+const NAV: [string, string][] = [
+  ["Tổng quan", "⌂"],
+  ["Bảng giá tổng", "▦"],
+  ["Làm báo giá", "＋"],
+  ["Kiến thức AI", "✦"],
+  ["Lịch sử", "↺"],
+  ["Cài đặt", "⚙"],
+];
 
-function Dashboard({quote,quotes,products,knowledge,newQuote,go}:{quote:QuoteState|null;quotes:QuoteState[];products:Product[];knowledge:Knowledge[];newQuote:()=>void;go:(x:string)=>void}){
- return <div className="space-y-6"><div className="card p-7"><div className="badge">WOTU QUOTATION SYSTEM</div><h2 className="hero">Quản lý báo giá tập trung.<br/><span>AI chỉ là trợ lý.</span></h2><p className="muted mt-3 max-w-2xl">Bảng giá tổng là nguồn dữ liệu. Mỗi báo giá là một hồ sơ riêng. Kiến thức AI và cài đặt nằm tách biệt, không trộn dữ liệu.</p><button className="primary mt-6" onClick={newQuote}>＋ Tạo báo giá mới</button></div>
- <div className="grid md:grid-cols-4 gap-4">{[["Mã sản phẩm",products.filter(p=>p.active).length],["Báo giá đã lưu",quotes.length],["Kiến thức bật",knowledge.filter(k=>k.enabled).length],["Báo giá hiện tại",quote?money(totals(quote).total):"Chưa tạo"]].map(x=><div className="card p-5" key={x[0]}><div className="muted">{x[0]}</div><div className="text-2xl font-semibold mt-2">{x[1]}</div></div>)}</div>
- <div className="grid lg:grid-cols-3 gap-4"><Action title="Bảng giá tổng" text="Quản lý toàn bộ mã, đơn vị, vật liệu, giá bán và trạng thái." onClick={()=>go("Bảng giá tổng")}/><Action title="Làm báo giá" text="Tạo một báo giá riêng, lấy giá từ bảng tổng." onClick={()=>go("Làm báo giá")}/><Action title="Cài đặt" text="Cấu hình AI, công ty, dữ liệu và sao lưu." onClick={()=>go("Cài đặt")}/></div></div>
-}
-function Action({title,text,onClick}:{title:string;text:string;onClick:()=>void}){return <button onClick={onClick} className="card p-5 text-left hover:-translate-y-0.5 transition"><div className="font-semibold">{title} →</div><div className="muted mt-2">{text}</div></button>}
+export default function Home() {
+  const [active, setActive] = useState("Tổng quan");
+  const [quote, setQuote] = useState<QuoteState | null>(null);
+  const [quotes, setQuotes] = useState<QuoteState[]>([]);
+  const [products, setProducts] = useState<Product[]>(catalog);
+  const [knowledge, setKnowledge] = useState<Knowledge[]>([]);
+  const [history, setHistory] = useState<QuoteHistory[]>([]);
+  const [settings, setSettings] = useState<AppSettings>(defaultSettings);
+  const [loaded, setLoaded] = useState(false);
+  const [showPrint, setShowPrint] = useState(false);
 
-function PriceBook({products,add,update,remove}:{products:Product[];add:(p:Product)=>void;update:(p:Product)=>void;remove:(c:string)=>void}){
- const[q,setQ]=useState(""),[cat,setCat]=useState("Tất cả"),[show,setShow]=useState(false);const cats=["Tất cả",...Array.from(new Set(products.map(p=>p.category)))];const list=products.filter(p=>(cat==="Tất cả"||p.category===cat)&&((p.code+" "+p.name+" "+p.material).toLowerCase().includes(q.toLowerCase())));
- return <div className="space-y-5"><div className="flex justify-between items-end"><div><div className="badge">MASTER PRICE BOOK</div><h2 className="hero text-3xl">Bảng giá tổng.</h2><p className="muted mt-2">Đây là kho dữ liệu trung tâm. AI và báo giá lấy dữ liệu từ đây.</p></div><button className="primary" onClick={()=>setShow(true)}>＋ Thêm mã</button></div><div className="card p-4 flex gap-3"><input className="field flex-1" value={q} onChange={e=>setQ(e.target.value)} placeholder="Tìm mã, tên, vật liệu..."/><select className="field max-w-[190px]" value={cat} onChange={e=>setCat(e.target.value)}>{cats.map(x=><option key={x}>{x}</option>)}</select></div><div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b bg-[#fafbfc] text-[10px] uppercase tracking-wider text-[#8992a0]"><th className="text-left p-4">Mã</th><th className="text-left">Hạng mục</th><th className="text-left">Nhóm</th><th className="text-left">ĐVT</th><th className="text-right">Đơn giá</th><th className="text-center">Trạng thái</th><th></th></tr></thead><tbody>{list.map(p=><tr className="border-b last:border-0" key={p.code}><td className="p-4 font-mono text-xs text-[#9a7441]">{p.code}</td><td><div className="font-medium">{p.name}</div><div className="text-xs text-[#9aa2ae]">{p.material}</div></td><td>{p.category}</td><td>{p.unit}</td><td className="text-right font-semibold">{money(p.price)}</td><td className="text-center"><button onClick={()=>update({...p,active:!p.active})} className={p.active?"status-on":"status-off"}>{p.active?"Đang dùng":"Đang ẩn"}</button></td><td className="text-right p-4"><button onClick={()=>update({...p,price:Number(prompt("Đơn giá mới",String(p.price))||p.price)})} className="text-xs underline mr-3">Sửa giá</button><button onClick={()=>remove(p.code)} className="text-xs text-red-500">Ẩn</button></td></tr>)}</tbody></table></div></div>{show&&<ProductModal onClose={()=>setShow(false)} onSave={p=>{add(p);setShow(false)}}/>}</div>
+  useEffect(() => {
+    try {
+      const get = (k: string, d: any) =>
+        JSON.parse(localStorage.getItem(k) || "null") ?? d;
+      setProducts(get("wotu_products", catalog));
+      setKnowledge(get("wotu_knowledge", []));
+      setHistory(get("wotu_history", []));
+      setQuotes(get("wotu_quotes", []));
+      const s = get("wotu_settings", defaultSettings);
+      setSettings({ ...defaultSettings, ...s });
+      const q = get("wotu_current_quote", null);
+      if (q) {
+        setQuote({
+          ...emptyQuote(s?.quotePrefix || "BG-WOTU"),
+          ...q,
+          quoteNumber: q.quoteNumber || emptyQuote().quoteNumber,
+          vat: q.vat ?? s?.defaultVat ?? 0,
+          discount: q.discount ?? 0,
+        });
+      }
+    } finally {
+      setLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!loaded) return;
+    localStorage.setItem("wotu_products", JSON.stringify(products));
+    localStorage.setItem("wotu_knowledge", JSON.stringify(knowledge));
+    localStorage.setItem("wotu_history", JSON.stringify(history));
+    localStorage.setItem("wotu_quotes", JSON.stringify(quotes));
+    localStorage.setItem("wotu_settings", JSON.stringify(settings));
+    if (quote)
+      localStorage.setItem("wotu_current_quote", JSON.stringify(quote));
+    else localStorage.removeItem("wotu_current_quote");
+  }, [loaded, products, knowledge, history, quotes, settings, quote]);
+
+  function newQuote() {
+    const q = emptyQuote(settings.quotePrefix);
+    q.vat = settings.defaultVat;
+    setQuote(q);
+    setActive("Làm báo giá");
+  }
+
+  function saveQuote(q: QuoteState) {
+    const next = [q, ...quotes.filter((x) => x.id !== q.id)];
+    setQuotes(next);
+    setQuote(q);
+  }
+
+  function record(action: string, q: QuoteState) {
+    const h: QuoteHistory = {
+      id: crypto.randomUUID(),
+      quoteId: q.id,
+      time: new Date().toISOString(),
+      action,
+      total: totals(q).total,
+      snapshot: structuredClone(q),
+    };
+    setHistory((x) => [h, ...x].slice(0, 100));
+  }
+
+  function finishQuote() {
+    if (!quote) return;
+    saveQuote(quote);
+    record("Lưu báo giá", quote);
+  }
+
+  function openQuote(q: QuoteState) {
+    setQuote(
+      structuredClone({
+        ...emptyQuote(settings.quotePrefix),
+        ...q,
+        vat: q.vat ?? 0,
+        discount: q.discount ?? 0,
+      })
+    );
+    setActive("Làm báo giá");
+  }
+
+  function updateProduct(p: Product) {
+    setProducts((x) => x.map((v) => (v.code === p.code ? p : v)));
+  }
+
+  function addProduct(p: Product) {
+    if (products.some((x) => x.code === p.code)) {
+      alert("Mã sản phẩm đã tồn tại.");
+      return;
+    }
+    setProducts((x) => [...x, p]);
+  }
+
+  function removeProduct(code: string) {
+    if (confirm("Ẩn mã này khỏi AI và bảng giá?")) {
+      setProducts((x) =>
+        x.map((p) => (p.code === code ? { ...p, active: false } : p))
+      );
+    }
+  }
+
+  if (!loaded) {
+    return (
+      <div className="min-h-screen grid place-items-center text-[#8a93a1]">
+        Đang mở WOTU…
+      </div>
+    );
+  }
+
+  return (
+    <main className="min-h-screen flex bg-[#f5f6f8] text-[#172033] page-pad-mobile">
+      <aside className="hidden lg:flex w-[255px] bg-[#111a2d] text-white flex-col p-4 sticky top-0 h-screen no-print">
+        <div className="flex items-center gap-3 px-3 py-4 mb-7">
+          <div className="w-10 h-10 rounded-xl bg-white text-[#111a2d] grid place-items-center font-black">W</div>
+          <div>
+            <div className="font-bold">WOTU</div>
+            <div className="text-[10px] tracking-[.28em] text-white/40">QUOTATION SYSTEM</div>
+          </div>
+        </div>
+        <div className="px-3 text-[10px] uppercase tracking-[.2em] text-white/30 mb-3">Hệ thống</div>
+        {NAV.map(([n, icon]) => (
+          <button
+            key={n}
+            onClick={() => setActive(n)}
+            className={
+              "flex items-center gap-3 w-full text-left px-3 py-3 rounded-xl text-sm mb-1 " +
+              (active === n ? "bg-white text-[#111a2d]" : "text-white/65 hover:bg-white/5")
+            }
+          >
+            <span className="w-5 text-center">{icon}</span>
+            {n}
+          </button>
+        ))}
+        <div className="mt-auto rounded-2xl bg-white/5 border border-white/10 p-4">
+          <div className="text-[10px] uppercase tracking-wider text-white/35">Dữ liệu</div>
+          <div className="mt-2 text-sm">{products.filter((p) => p.active).length} mã đang dùng</div>
+          <div className="text-xs text-white/45">{quotes.length} báo giá đã lưu</div>
+        </div>
+      </aside>
+
+      <section className="flex-1 min-w-0">
+        <header className="h-[74px] bg-white/90 backdrop-blur border-b flex items-center justify-between px-4 lg:px-8 sticky top-0 z-20 no-print">
+          <div>
+            <div className="text-[11px] text-[#929aa7]">WOTU / {active}</div>
+            <h1 className="font-semibold mt-0.5">{active}</h1>
+          </div>
+          <button className="primary" onClick={newQuote}>＋ Báo giá mới</button>
+        </header>
+
+        <div className="p-4 lg:p-8 max-w-[1600px] mx-auto">
+          {active === "Tổng quan" && (
+            <Dashboard quote={quote} quotes={quotes} products={products} knowledge={knowledge} newQuote={newQuote} go={setActive} />
+          )}
+          {active === "Bảng giá tổng" && (
+            <PriceBook products={products} add={addProduct} update={updateProduct} remove={removeProduct} />
+          )}
+          {active === "Làm báo giá" && (
+            <QuoteEditor
+              quote={quote}
+              products={products}
+              knowledge={knowledge}
+              settings={settings}
+              setQuote={setQuote}
+              setProducts={setProducts}
+              setKnowledge={setKnowledge}
+              save={finishQuote}
+              newQuote={newQuote}
+              record={record}
+              onPrint={() => setShowPrint(true)}
+            />
+          )}
+          {active === "Kiến thức AI" && (
+            <KnowledgePage knowledge={knowledge} setKnowledge={setKnowledge} />
+          )}
+          {active === "Lịch sử" && (
+            <HistoryPage history={history} onOpen={openQuote} />
+          )}
+          {active === "Cài đặt" && (
+            <SettingsPage
+              settings={settings}
+              setSettings={setSettings}
+              products={products}
+              knowledge={knowledge}
+              quotes={quotes}
+              setProducts={setProducts}
+              setKnowledge={setKnowledge}
+              setQuotes={setQuotes}
+            />
+          )}
+        </div>
+      </section>
+
+      <nav className="mobile-nav no-print">
+        {NAV.map(([n, icon]) => (
+          <button key={n} className={active === n ? "active" : ""} onClick={() => setActive(n)}>
+            <span className="text-base">{icon}</span>
+            <span className="truncate max-w-[56px]">{n.split(" ")[0]}</span>
+          </button>
+        ))}
+      </nav>
+
+      {showPrint && quote && (
+        <PrintModal quote={quote} settings={settings} onClose={() => setShowPrint(false)} />
+      )}
+    </main>
+  );
 }
-function ProductModal({onClose,onSave}:{onClose:()=>void;onSave:(p:Product)=>void}){const[code,setCode]=useState(""),[name,setName]=useState(""),[category,setCategory]=useState("Nội thất"),[unit,setUnit]=useState("MD"),[price,setPrice]=useState(""),[material,setMaterial]=useState("");return <Modal title="Thêm mã vào bảng giá tổng" onClose={onClose}><div className="grid gap-3">{[[code,setCode,"Mã sản phẩm"],[name,setName,"Tên hạng mục"],[category,setCategory,"Nhóm"],[unit,setUnit,"Đơn vị"],[price,setPrice,"Đơn giá"],[material,setMaterial,"Vật liệu"]].map(([v,s,ph]:any)=><input key={ph} className="field" placeholder={ph} value={v} onChange={e=>s(e.target.value)}/>)}</div><button className="primary w-full mt-4" onClick={()=>code&&name&&price&&onSave({code:code.toUpperCase(),name,category,unit,price:Number(price),material,active:true})}>Lưu vào bảng giá tổng</button></Modal>}
-function QuoteEditor({quote,products,knowledge,setQuote,save,newQuote,record,settings}:{quote:QuoteState|null;products:Product[];knowledge:Knowledge[];setQuote:(q:QuoteState)=>void;save:()=>void;newQuote:()=>void;record:(a:string,q:QuoteState)=>void;settings:AppSettings}){const[input,setInput]=useState(""),[busy,setBusy]=useState(false),[selected,setSelected]=useState<string|null>(null);if(!quote)return <div className="card p-16 text-center"><h2 className="text-xl font-semibold">Chưa có báo giá.</h2><p className="muted mt-2">Tạo một báo giá riêng rồi mới thêm hạng mục.</p><button className="primary mt-5" onClick={newQuote}>＋ Tạo báo giá</button></div>;
- const t=totals(quote);async function send(){if(!input.trim()||busy)return;setBusy(true);try{const r=await fetch("/api/ai-quote",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:input,quote,products,knowledge})});const d=await r.json();if(!r.ok)throw new Error(d.error||"AI lỗi");const next=applyAICommand(quote,d,products);setQuote(next);record(d.message||input,next);setInput("")}catch(e){alert(e instanceof Error?e.message:"Không gọi được AI")}finally{setBusy(false)}}function remove(code?:string){if(!code)return;setQuote({...quote,items:quote.items.filter(i=>i.code!==code),updatedAt:new Date().toISOString()})}return <div className="grid xl:grid-cols-[minmax(0,1fr)_390px] gap-5"><div className="space-y-5"><div className="flex justify-between items-end"><div><div className="badge">QUOTE {quote.id.slice(0,8).toUpperCase()}</div><h2 className="hero text-3xl">{quote.project||"Báo giá mới"}</h2></div><div className="flex gap-2"><button className="secondary" onClick={newQuote}>Mới</button><button className="primary" onClick={save}>Lưu báo giá</button></div></div><div className="card p-5 grid md:grid-cols-2 gap-3"><input className="field" value={quote.customer} onChange={e=>setQuote({...quote,customer:e.target.value,updatedAt:new Date().toISOString()})} placeholder="Khách hàng"/><input className="field" value={quote.project} onChange={e=>setQuote({...quote,project:e.target.value,updatedAt:new Date().toISOString()})} placeholder="Tên công trình"/></div><div className="card overflow-hidden"><div className="p-5 border-b flex justify-between"><div><b>Chi tiết báo giá</b><div className="muted mt-1">{quote.items.length} hạng mục</div></div><div className="text-right"><div className="muted">TỔNG CỘNG</div><div className="text-xl font-bold">{money(t.total)}</div></div></div>{quote.items.length?<table className="w-full text-sm"><thead><tr className="border-b text-[10px] uppercase text-[#929baa]"><th className="text-left p-4">Hạng mục</th><th>KL</th><th>Đơn giá</th><th>Thành tiền</th><th></th></tr></thead><tbody>{quote.items.map(i=><tr key={i.id} className="border-b"><td className="p-4"><b>{i.name}</b><div className="text-xs text-[#929baa]">{i.code} · {i.material}</div></td><td className="text-center">{i.qty} {i.unit}</td><td className="text-right">{money(i.unitPrice)}</td><td className="text-right font-semibold">{money(i.qty*i.unitPrice)}</td><td className="p-4 text-right"><button onClick={()=>remove(i.code)} className="text-xs text-red-500">Xóa</button></td></tr>)}</tbody></table>:<div className="p-16 text-center muted">Báo giá đang trống. Hãy yêu cầu AI hoặc chọn mã từ bảng giá.</div>}<div className="p-5 border-t ml-auto max-w-sm space-y-2"><div className="flex justify-between">Tạm tính <b>{money(t.subtotal)}</b></div><div className="flex justify-between">Chiết khấu <b>- {money(t.discount)}</b></div><div className="flex justify-between border-t pt-3 text-base"><b>TỔNG CỘNG</b><b>{money(t.total)}</b></div></div></div></div><aside className="space-y-4 sticky top-[94px] h-fit"><div className="card overflow-hidden"><div className="bg-[#111a2d] text-white p-5"><div className="text-[10px] tracking-widest text-white/40">WOTU AI COPILOT</div><b className="text-lg block mt-1">Nhập yêu cầu tự nhiên.</b><span className="text-xs text-white/45">AI đọc bảng giá tổng + kiến thức đang bật.</span></div><div className="p-5">{["Bếp 3m5 MDF chống ẩm phủ melamine","Thêm 2 bộ ray giảm chấn","Bỏ kính bếp","Giảm 5%"].map(x=><button key={x} onClick={()=>setInput(x)} className="suggest">{x}</button>)}<textarea className="field min-h-[120px] resize-none" value={input} onChange={e=>setInput(e.target.value)} placeholder="Ví dụ: thêm trần thạch cao 85m² giá 210 nghìn/m²..."/><button disabled={busy} className="primary w-full mt-2" onClick={send}>{busy?"Đang xử lý…":"Gửi cho AI"}</button></div></div><div className="card p-4"><div className="font-medium text-sm">Kiến thức đang áp dụng</div>{knowledge.filter(k=>k.enabled).slice(0,5).map(k=><div className="text-xs text-[#707988] mt-2" key={k.id}>• {k.title}</div>)}{!knowledge.filter(k=>k.enabled).length&&<div className="muted mt-2">Chưa có quy tắc.</div>}</div></aside></div>
-}
-function KnowledgePage({knowledge,setKnowledge}:{knowledge:Knowledge[];setKnowledge:(x:Knowledge[])=>void}){const[show,setShow]=useState(false);return <div className="space-y-5"><div className="flex justify-between items-end"><div><div className="badge">AI KNOWLEDGE BASE</div><h2 className="hero text-3xl">Kho kiến thức.</h2><p className="muted mt-2">Quy tắc kinh doanh, cách tính, vật liệu và hướng dẫn cho AI.</p></div><button className="primary" onClick={()=>setShow(true)}>＋ Thêm kiến thức</button></div><div className="card divide-y">{knowledge.length?knowledge.map(k=><div className="p-5 flex gap-4" key={k.id}><button onClick={()=>setKnowledge(knowledge.map(x=>x.id===k.id?{...x,enabled:!x.enabled}:x))} className={k.enabled?"status-on":"status-off"}>{k.enabled?"BẬT":"TẮT"}</button><div className="flex-1"><b>{k.title}</b><div className="text-sm text-[#687282] mt-1 whitespace-pre-wrap">{k.content}</div></div><button className="text-xs text-red-500" onClick={()=>setKnowledge(knowledge.filter(x=>x.id!==k.id))}>Xóa</button></div>):<div className="p-16 text-center muted">Kho kiến thức đang trống.</div>}</div>{show&&<KnowledgeModal onClose={()=>setShow(false)} onSave={k=>{setKnowledge([...knowledge,k]);setShow(false)}}/>}</div>}
-function KnowledgeModal({onClose,onSave}:{onClose:()=>void;onSave:(k:Knowledge)=>void}){const[t,setT]=useState(""),[c,setC]=useState("");return <Modal title="Thêm kiến thức cho AI" onClose={onClose}><input className="field mb-3" value={t} onChange={e=>setT(e.target.value)} placeholder="Tên quy tắc"/><textarea className="field min-h-[150px]" value={c} onChange={e=>setC(e.target.value)} placeholder="Ví dụ: Giá công trình A của trần thạch cao là 220.000đ/m²; chỉ áp dụng trong dự án đó..."/><button className="primary w-full mt-3" onClick={()=>t&&c&&onSave({id:crypto.randomUUID(),title:t,content:c,enabled:true,createdAt:new Date().toISOString()})}>Lưu kiến thức</button></Modal>}
-function HistoryPage({history,onOpen}:{history:QuoteHistory[];onOpen:(q:QuoteState)=>void}){return <div className="space-y-5"><div><div className="badge">QUOTE HISTORY</div><h2 className="hero text-3xl">Lịch sử báo giá.</h2><p className="muted mt-2">Mỗi phiên lưu snapshot để có thể mở lại.</p></div><div className="card overflow-hidden">{history.length?history.map(h=><div className="p-5 border-b flex justify-between items-center" key={h.id}><div><b>{h.snapshot.project||"Báo giá chưa đặt tên"}</b><div className="text-xs text-[#8992a0] mt-1">{h.snapshot.customer||"Chưa có khách"} · {new Date(h.time).toLocaleString("vi-VN")} · {h.action}</div></div><div className="flex items-center gap-4"><b>{money(h.total)}</b><button className="secondary" onClick={()=>onOpen(h.snapshot)}>Mở lại</button></div></div>):<div className="p-16 text-center muted">Chưa có lịch sử.</div>}</div></div>}
-function SettingsPage({settings,setSettings,products,knowledge,quotes}:{settings:AppSettings;setSettings:(x:AppSettings)=>void;products:Product[];knowledge:Knowledge[];quotes:QuoteState[]}){function backup(){const blob=new Blob([JSON.stringify({products,knowledge,quotes,settings},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="wotu-backup.json";a.click();URL.revokeObjectURL(a.href)}return <div className="max-w-4xl space-y-5"><div><div className="badge">SYSTEM SETTINGS</div><h2 className="hero text-3xl">Cài đặt.</h2><p className="muted mt-2">Cấu hình ứng dụng. Khóa API không lưu vào mã nguồn.</p></div><section className="card p-6"><h3 className="font-semibold">AI & API</h3><p className="muted mt-1">API key nên đặt ở Vercel Environment Variables để không lộ khóa trên trình duyệt.</p><div className="mt-4 p-4 rounded-xl bg-[#f7f8fa] text-sm"><b>OPENAI_API_KEY</b><div className="text-xs text-[#7e8795] mt-1">Cài tại Vercel → Project → Settings → Environment Variables.</div><div className="mt-2 text-emerald-600 text-xs">● Khóa không hiển thị trong app</div></div><label className="block text-sm font-medium mt-5">Model AI</label><input className="field mt-2" value={settings.model} onChange={e=>setSettings({...settings,model:e.target.value})}/></section><section className="card p-6"><h3 className="font-semibold">Thông tin báo giá</h3><div className="grid md:grid-cols-2 gap-3 mt-4"><input className="field" value={settings.companyName} onChange={e=>setSettings({...settings,companyName:e.target.value})} placeholder="Tên đơn vị"/><input className="field" value={settings.quotePrefix} onChange={e=>setSettings({...settings,quotePrefix:e.target.value})} placeholder="Tiền tố số báo giá"/></div><label className="flex items-center gap-3 mt-4 text-sm"><input type="checkbox" checked={settings.autoSave} onChange={e=>setSettings({...settings,autoSave:e.target.checked})}/> Tự động lưu dữ liệu trên thiết bị</label></section><section className="card p-6"><h3 className="font-semibold">Dữ liệu</h3><p className="muted mt-1">Sao lưu toàn bộ bảng giá, kiến thức và báo giá thành một file.</p><button className="secondary mt-4" onClick={backup}>Xuất bản sao lưu JSON</button></section></div>}
-function Modal({title,children,onClose}:{title:string;children:React.ReactNode;onClose:()=>void}){return <div className="fixed inset-0 bg-black/40 z-50 grid place-items-center p-5"><div className="bg-white rounded-3xl p-6 w-full max-w-lg relative shadow-2xl"><button onClick={onClose} className="absolute right-5 top-5 text-[#8992a0]">✕</button><h3 className="text-lg font-semibold mb-5">{title}</h3>{children}</div></div>}
