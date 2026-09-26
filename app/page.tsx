@@ -26,7 +26,7 @@ const NAV_ADMIN: [string, string][] = [
   ["Tổng quan", "⌂"],
   ["Bảng giá tổng", "▦"],
   ["Làm báo giá", "＋"],
-  ["Business Agent", "◎"],
+  ["Hỗ trợ bảng giá", "◎"],
   ["Kiến thức AI", "✦"],
   ["Lịch sử", "↺"],
   ["Cài đặt", "⚙"],
@@ -188,7 +188,7 @@ export default function Home() {
   }
 
   function removeProduct(code: string) {
-    if (confirm("Ẩn mã này khỏi AI và bảng giá?")) {
+    if (confirm("Ẩn mã này khỏi bảng giá?")) {
       setProducts((x) => {
         const next = x.map((p) =>
           p.code === code ? { ...p, active: false } : p
@@ -202,7 +202,7 @@ export default function Home() {
   if (!loaded || status === "loading") {
     return (
       <div className="min-h-screen grid place-items-center text-[#8a93a1]">
-        Đang mở WOTU…
+        Đang tải…
       </div>
     );
   }
@@ -210,7 +210,7 @@ export default function Home() {
   if (status === "unauthenticated") {
     return (
       <div className="min-h-screen grid place-items-center text-[#8a93a1]">
-        Đang chuyển đăng nhập…
+        Đang mở phiên đăng nhập…
       </div>
     );
   }
@@ -229,12 +229,12 @@ export default function Home() {
               <span className="text-[#e11d2e]">WOTU</span>
             </div>
             <div className="text-[9px] tracking-[.22em] text-white/45">
-              DESIGN · BUILD
+              DESIGN BUILD
             </div>
           </div>
         </div>
         <div className="px-3 text-[10px] uppercase tracking-[.2em] text-white/30 mb-3">
-          Hệ thống
+          Menu
         </div>
         {NAV.map(([n, icon]) => (
           <button
@@ -257,7 +257,7 @@ export default function Home() {
           </div>
           <div className="mt-2 text-sm truncate">{session?.user?.email}</div>
           <div className="text-xs text-white/45">
-            {isAdmin ? "Admin · full quyền" : "Chỉ làm báo giá"}
+            {isAdmin ? "Quản trị" : "Nhân viên"}
           </div>
         </div>
       </aside>
@@ -271,7 +271,6 @@ export default function Home() {
           <div className="flex items-center gap-2">
             <span className="hidden sm:inline text-xs text-[#8a93a1] max-w-[180px] truncate">
               {session?.user?.email}
-              {isAdmin ? " · Admin" : ""}
             </span>
             <button className="primary" onClick={newQuote}>
               ＋ Báo giá mới
@@ -322,7 +321,7 @@ export default function Home() {
               onPrint={() => setShowPrint(true)}
             />
           )}
-          {active === "Business Agent" && isAdmin && (
+          {active === "Hỗ trợ bảng giá" && isAdmin && (
             <BusinessAgent
               settings={settings}
               products={products}
