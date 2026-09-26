@@ -16,13 +16,13 @@ export function SettingsPage({
   setQuotes,
 }: {
   settings: AppSettings;
-  setSettings: (x: AppSettings) => void;
+  setSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
   products: Product[];
   knowledge: Knowledge[];
   quotes: QuoteState[];
-  setProducts: (x: Product[]) => void;
-  setKnowledge: (x: Knowledge[]) => void;
-  setQuotes: (x: QuoteState[]) => void;
+  setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
+  setKnowledge: React.Dispatch<React.SetStateAction<Knowledge[]>>;
+  setQuotes: React.Dispatch<React.SetStateAction<QuoteState[]>>;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -47,9 +47,9 @@ export function SettingsPage({
         if (data.knowledge) setKnowledge(data.knowledge);
         if (data.quotes) setQuotes(data.quotes);
         if (data.settings) setSettings({ ...defaultSettings, ...data.settings });
-        alert("Khôi phục thành công!");
+        alert("Khoi phuc thanh cong!");
       } catch {
-        alert("File không hợp lệ.");
+        alert("File khong hop le.");
       }
     };
     reader.readAsText(file);
@@ -59,13 +59,13 @@ export function SettingsPage({
     <div className="max-w-4xl space-y-5">
       <div>
         <div className="badge">SYSTEM SETTINGS</div>
-        <h2 className="hero text-3xl">Cài đặt.</h2>
-        <p className="muted mt-2">Cấu hình ứng dụng, API key và dạy AI.</p>
+        <h2 className="hero text-3xl">Cai dat.</h2>
+        <p className="muted mt-2">Cau hinh ung dung, API key va day AI.</p>
       </div>
 
       <section className="card p-6">
         <h3 className="font-semibold">AI & API Key</h3>
-        <p className="muted mt-1">Key lưu trên thiết bị (localStorage), không đưa lên git.</p>
+        <p className="muted mt-1">Key luu tren thiet bi (localStorage).</p>
         <label className="block text-sm font-medium mt-4">OPENAI_API_KEY</label>
         <div className="flex gap-2 mt-2">
           <input
@@ -80,17 +80,17 @@ export function SettingsPage({
             type="button"
             className="secondary shrink-0"
             onClick={() =>
-              alert(settings.apiKey.trim() ? "Đã lưu API key trên thiết bị này." : "Chưa nhập API key.")
+              alert(settings.apiKey.trim() ? "Da luu API key." : "Chua nhap API key.")
             }
           >
-            Lưu key
+            Luu key
           </button>
         </div>
         <div className="mt-2 text-xs">
           {settings.apiKey.trim() ? (
-            <span className="text-emerald-600">● Đã có key trên thiết bị</span>
+            <span className="text-emerald-600">Da co key</span>
           ) : (
-            <span className="text-[#8a93a1]">○ Chưa có key — dùng key Vercel nếu có</span>
+            <span className="text-[#8a93a1]">Chua co key</span>
           )}
         </div>
         <label className="block text-sm font-medium mt-5">Model AI</label>
@@ -111,15 +111,15 @@ export function SettingsPage({
       />
 
       <section className="card p-6">
-        <h3 className="font-semibold">Thông tin công ty</h3>
+        <h3 className="font-semibold">Thong tin cong ty</h3>
         <div className="grid sm:grid-cols-2 gap-3 mt-4">
-          <input className="field" value={settings.companyName} onChange={(e) => setSettings({ ...settings, companyName: e.target.value })} placeholder="Tên đơn vị" />
-          <input className="field" value={settings.quotePrefix} onChange={(e) => setSettings({ ...settings, quotePrefix: e.target.value })} placeholder="Tiền tố số BG" />
-          <input className="field" value={settings.companyPhone} onChange={(e) => setSettings({ ...settings, companyPhone: e.target.value })} placeholder="Điện thoại" />
+          <input className="field" value={settings.companyName} onChange={(e) => setSettings({ ...settings, companyName: e.target.value })} placeholder="Ten don vi" />
+          <input className="field" value={settings.quotePrefix} onChange={(e) => setSettings({ ...settings, quotePrefix: e.target.value })} placeholder="Tien to so BG" />
+          <input className="field" value={settings.companyPhone} onChange={(e) => setSettings({ ...settings, companyPhone: e.target.value })} placeholder="Dien thoai" />
           <input className="field" value={settings.companyEmail} onChange={(e) => setSettings({ ...settings, companyEmail: e.target.value })} placeholder="Email" />
-          <input className="field sm:col-span-2" value={settings.companyAddress} onChange={(e) => setSettings({ ...settings, companyAddress: e.target.value })} placeholder="Địa chỉ" />
+          <input className="field sm:col-span-2" value={settings.companyAddress} onChange={(e) => setSettings({ ...settings, companyAddress: e.target.value })} placeholder="Dia chi" />
         </div>
-        <label className="block text-sm font-medium mt-4">VAT mặc định (%)</label>
+        <label className="block text-sm font-medium mt-4">VAT mac dinh (%)</label>
         <input
           className="field mt-2 max-w-[160px]"
           type="number"
@@ -129,10 +129,10 @@ export function SettingsPage({
       </section>
 
       <section className="card p-6">
-        <h3 className="font-semibold">Sao lưu & khôi phục</h3>
+        <h3 className="font-semibold">Sao luu & khoi phuc</h3>
         <div className="flex flex-wrap gap-3 mt-4">
-          <button className="primary" onClick={backup}>Tải backup JSON</button>
-          <button className="secondary" onClick={() => fileRef.current?.click()}>Khôi phục từ file</button>
+          <button className="primary" onClick={backup}>Tai backup JSON</button>
+          <button className="secondary" onClick={() => fileRef.current?.click()}>Khoi phuc tu file</button>
           <input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={(e) => e.target.files?.[0] && restore(e.target.files[0])} />
         </div>
       </section>
