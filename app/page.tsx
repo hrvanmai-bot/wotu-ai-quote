@@ -193,7 +193,7 @@ export default function Home() {
             <Dashboard quote={quote} quotes={quotes} products={products} knowledge={knowledge} newQuote={newQuote} go={setActive} />
           )}
           {active === "Bảng giá tổng" && (
-            <PriceBook products={products} add={addProduct} update={updateProduct} remove={removeProduct} />
+            <PriceBook products={products} add={addProduct} update={updateProduct} remove={removeProduct} settings={settings} setProducts={setProducts} />
           )}
           {active === "Làm báo giá" && (
             <QuoteEditor
