@@ -1,20 +1,19 @@
 "use client";
 import { useMemo, useState } from "react";
-import { applyAICommand, catalog, createKitchen, money, QuoteState, totals } from "../lib/quote-engine";
+import { applyAICommand, catalog, emptyQuote, money, QuoteState, totals } from "../lib/quote-engine";
 const nav=["Tổng quan","Báo giá","Kho mã sản phẩm","Kiến thức AI","Lịch sử"];
 export default function Home(){
  const [active,setActive]=useState("Báo giá"),[quote,setQuote]=useState<QuoteState>(emptyQuote),[input,setInput]=useState(""),[query,setQuery]=useState("");
  const [messages,setMessages]=useState<string[]>(["Tao đã nạp khung báo giá WOTU và sẵn sàng chỉnh theo câu lệnh tự nhiên.","Giá chỉ lấy từ kho mã hoặc giá mày nhập trực tiếp — AI không tự bịa giá."]);
  const t=totals(quote),products=useMemo(()=>catalog.filter(p=>(p.code+" "+p.name+" "+p.material).toLowerCase().includes(query.toLowerCase())),[query]);
- async function send(){if(!input.trim())return;const r=await fetch("/api/ai-quote",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:input,quote})});const d=await r.json();if(!r.ok)throw new Error(d.error||"AI lỗi");setQuote(q=>applyAICommand(q,d));setMessages(m=>[...m,"Mày: "+input,"AI: "+d.message]);setInput("")}
- return <main className="min-h-screen flex">
+ async function send(){if(!input.trim())return;try{const r=await fetch("/api/ai-quote",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:input,quote})});const d=await r.json();if(!r.ok)throw new Error(d.error||"AI lỗi");setQuote(q=>applyAICommand(q,d));setMessages(m=>[...m,"Mày: "+input,"AI: "+d.message]);setInput("");}catch(e){setMessages(m=>[...m,"AI: "+(e instanceof Error?e.message:"Không gọi được AI.")])} return <main className="min-h-screen flex">
   <aside className="hidden lg:flex w-[248px] navy text-white flex-col p-4 sticky top-0 h-screen">
    <div className="flex items-center gap-3 px-3 py-3 mb-8"><div className="w-10 h-10 rounded-xl bg-white/10 border border-white/10 grid place-items-center font-black">W</div><div><div className="font-semibold">WOTU</div><div className="text-[10px] tracking-[.25em] text-white/40">AI QUOTE</div></div></div>
    <div className="px-3 text-[10px] uppercase tracking-[.2em] text-white/30 mb-3">Workspace</div>{nav.map(n=><button key={n} onClick={()=>setActive(n)} className={"w-full text-left px-3 py-3 rounded-xl text-sm mb-1 "+(active===n?"bg-white text-[#111a2d]":"text-white/65 hover:bg-white/5")}>{n}</button>)}
    <div className="mt-auto p-3 rounded-2xl bg-white/5 border border-white/10"><div className="text-xs text-white/40">AI Memory</div><div className="flex items-center gap-2 mt-2 text-sm"><span className="w-2 h-2 rounded-full bg-emerald-400"/>Đang hoạt động</div></div>
   </aside>
   <section className="flex-1 min-w-0">
-   <header className="h-[74px] bg-white/90 backdrop-blur border-b border-[#e7ebf0] flex items-center justify-between px-5 lg:px-8 sticky top-0 z-10"><div><div className="text-xs text-[#939cab]">WOTU Workspace / {active}</div><h1 className="font-semibold mt-0.5">{active}</h1></div><button onClick={()=>{setQuote(createKitchen());setMessages(["Đã tạo báo giá mới từ mẫu bếp WOTU."])}} className="bg-[#14213d] text-white px-4 py-2.5 rounded-xl text-sm">+ Báo giá mới</button></header>
+   <header className="h-[74px] bg-white/90 backdrop-blur border-b border-[#e7ebf0] flex items-center justify-between px-5 lg:px-8 sticky top-0 z-10"><div><div className="text-xs text-[#939cab]">WOTU Workspace / {active}</div><h1 className="font-semibold mt-0.5">{active}</h1></div><button onClick={()=>{setQuote(emptyQuote());setMessages(["Đã tạo báo giá mới từ mẫu bếp WOTU."])}} className="bg-[#14213d] text-white px-4 py-2.5 rounded-xl text-sm">+ Báo giá mới</button></header>
    <div className="p-5 lg:p-8 max-w-[1550px] mx-auto"><div className="grid xl:grid-cols-[minmax(0,1fr)_390px] gap-5">
     <div className="space-y-5">
      <div className="flex items-end justify-between"><div><div className="inline-flex px-3 py-1.5 rounded-full bg-[#fbf5ea] text-[#9a7441] text-xs">✦ AI-powered quotation</div><h2 className="text-3xl font-semibold tracking-[-.035em] mt-3">Báo giá thông minh,<br/><span className="text-[#7e8795]">đúng chất WOTU.</span></h2></div><div className="hidden md:block text-right text-xs text-[#8c95a4]">BG-NT-AI-260926<br/><b className="text-[#172033]">Bản nháp · v1</b></div></div>
