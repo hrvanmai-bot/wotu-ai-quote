@@ -1,12 +1,12 @@
 "use client";
 import { useMemo, useState } from "react";
-import { applyCommand, catalog, createKitchen, money, QuoteState, totals } from "../lib/quote-engine";
+import { applyAICommand, catalog, createKitchen, money, QuoteState, totals } from "../lib/quote-engine";
 const nav=["Tổng quan","Báo giá","Kho mã sản phẩm","Kiến thức AI","Lịch sử"];
 export default function Home(){
- const [active,setActive]=useState("Báo giá"),[quote,setQuote]=useState<QuoteState>(()=>createKitchen()),[input,setInput]=useState(""),[query,setQuery]=useState("");
+ const [active,setActive]=useState("Báo giá"),[quote,setQuote]=useState<QuoteState>(emptyQuote),[input,setInput]=useState(""),[query,setQuery]=useState("");
  const [messages,setMessages]=useState<string[]>(["Tao đã nạp khung báo giá WOTU và sẵn sàng chỉnh theo câu lệnh tự nhiên.","Giá chỉ lấy từ kho mã hoặc giá mày nhập trực tiếp — AI không tự bịa giá."]);
  const t=totals(quote),products=useMemo(()=>catalog.filter(p=>(p.code+" "+p.name+" "+p.material).toLowerCase().includes(query.toLowerCase())),[query]);
- function send(){if(!input.trim())return;const r=applyCommand(quote,input);setQuote(r.state);setMessages(m=>[...m,"Mày: "+input,"AI: "+r.message]);setInput("")}
+ async function send(){if(!input.trim())return;const r=await fetch("/api/ai-quote",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:input,quote})});const d=await r.json();if(!r.ok)throw new Error(d.error||"AI lỗi");setQuote(q=>applyAICommand(q,d));setMessages(m=>[...m,"Mày: "+input,"AI: "+d.message]);setInput("")}
  return <main className="min-h-screen flex">
   <aside className="hidden lg:flex w-[248px] navy text-white flex-col p-4 sticky top-0 h-screen">
    <div className="flex items-center gap-3 px-3 py-3 mb-8"><div className="w-10 h-10 rounded-xl bg-white/10 border border-white/10 grid place-items-center font-black">W</div><div><div className="font-semibold">WOTU</div><div className="text-[10px] tracking-[.25em] text-white/40">AI QUOTE</div></div></div>
