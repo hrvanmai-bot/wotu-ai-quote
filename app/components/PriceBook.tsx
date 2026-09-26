@@ -3,17 +3,23 @@
 import { useState } from "react";
 import { money, Product } from "../../lib/quote-engine";
 import { Modal } from "./Modal";
+import { ImportCatalog } from "./ImportCatalog";
+import { AppSettings } from "../../lib/settings";
 
 export function PriceBook({
   products,
   add,
   update,
   remove,
+  settings,
+  setProducts,
 }: {
   products: Product[];
   add: (p: Product) => void;
   update: (p: Product) => void;
   remove: (c: string) => void;
+  settings: AppSettings;
+  setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
 }) {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("Tất cả");
@@ -33,9 +39,12 @@ export function PriceBook({
           <h2 className="hero text-3xl">Bảng giá tổng.</h2>
           <p className="muted mt-2">Kho dữ liệu trung tâm. AI và báo giá lấy từ đây.</p>
         </div>
-        <button className="primary shrink-0" onClick={() => setShow(true)}>
-          ＋ Thêm mã
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <ImportCatalog settings={settings} products={products} setProducts={setProducts} />
+          <button className="primary shrink-0" onClick={() => setShow(true)}>
+            ＋ Thêm mã
+          </button>
+        </div>
       </div>
       <div className="card p-4 flex flex-col sm:flex-row gap-3">
         <input className="field flex-1" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm mã, tên..." />
