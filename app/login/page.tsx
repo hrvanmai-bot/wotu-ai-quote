@@ -53,16 +53,6 @@ export default function LoginPage() {
             animationDelay: "1s",
           }}
         />
-        <div
-          className="absolute top-[52%] left-[58%] w-14 h-14 rounded-full opacity-35 animate-pulse"
-          style={{
-            background: "rgba(255, 255, 255, 0.12)",
-            backdropFilter: "blur(14px)",
-            WebkitBackdropFilter: "blur(14px)",
-            border: "1px solid rgba(255, 255, 255, 0.3)",
-            animationDelay: "0.5s",
-          }}
-        />
       </div>
 
       <div
@@ -84,7 +74,25 @@ export default function LoginPage() {
               boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
             }}
           >
-            <img src="/wotu-mark.svg" alt="WOTU" className="w-9 h-9" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 64 64"
+              className="w-9 h-9"
+              aria-label="WOTU"
+            >
+              <path
+                d="M12 16 L32 8 L52 16 L52 48 L32 56 L12 48 Z"
+                stroke="#111a2d"
+                strokeWidth="3.5"
+                fill="none"
+              />
+              <path
+                d="M20 22 L32 16 L44 22 L44 42 L32 48 L20 42 Z"
+                stroke="#111a2d"
+                strokeWidth="2.5"
+                fill="none"
+              />
+            </svg>
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-[#0c115b]">
             <span className="text-[#c41e2a]">WOTU</span> Quote
